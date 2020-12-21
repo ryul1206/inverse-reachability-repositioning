@@ -1,0 +1,63 @@
+# ================================================
+# [ INPUT ]
+# Pt: Position of the target object
+#     - relative to: the robot coordinate
+#     - format: (x, y)
+# Obs: Area list of ground obstacles
+#     - relative to: the robot coordinate
+#     - format: [CollisionModel, ...]
+# Cr: Constraints on the approach angle
+#     - relative to: the robot heading
+#     - format: (min, max)
+#     - range: -90 ~ 90
+# Ct: Constraints on the approach angle
+#     - relative to: the target heading
+        (Assumtion) The initial T_heading is the same as initial R_heading.
+#     - format: (min, max)
+#     - range: -180 ~ 180
+# section_def: The definition of ROI (Region of interest)
+#     - relative to: the center of the target
+#     - format: (min_radius, max_radius, interval)
+#
+# [ OUTPUT ]
+# num_candidates
+# candidates: new x, y, heading of the robot
+#     - relative to: **previous** robot coordinate
+# approach_angles
+#     - relative to: new robot heading
+# manipulabilities
+#
+# ________________________
+# * Distance unit: meters
+# * Angle unit: radians
+# ================================================
+
+# x, y (ignore theta)
+geometry_msgs/Pose2D Pt
+
+# These will be collision models.
+vision_msgs/BoundingBox2D[] Obs
+
+# x is min, y is max (ignore z)
+geometry_msgs/Vector3 Cr
+geometry_msgs/Vector3 Ct
+
+# x is min_radius, y is max_radius, z is interval
+geometry_msgs/Vector3 section_definition
+
+---
+
+# The number of candidates
+uint8 num_candidates
+
+# x, y, heading of the robot
+geometry_msgs/Pose2D[] candidates
+
+#       [top view]
+#     45     0    -45
+#       .    ^    .
+#         .  |  .
+#  90 <------|------> -90
+#     approach angle
+float64[] approach_angles
+float64[] manipulabilities

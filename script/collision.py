@@ -50,9 +50,9 @@ class CollisionBase:
 class CollisionBox(CollisionBase):
     def __init__(self, center, rad, width, length):
         """
-                       | y, length
+                       | y, length(size_y)
                        |
-           ------------- x, width
+           ------------- x, width(size_x)
         """
         super(CollisionBox, self).__init__(center, rad)
         self._half_width = width / 2.0

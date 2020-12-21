@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from basic_math import rotation_3d_about_z
 import feasibility_utils as futils
-
 """
 raw:
     [[Cr x y manip],
@@ -25,12 +24,8 @@ class FeasibilityMap:
         self._is_jupyter = is_jupyter
         if self._is_jupyter:
             self.xyMinMax = [-0.5, 0.5, -0.5, 0.5]
-            futils.two_plot(
-                [(manip_layers, False), (self.feasi_raw, True)], self.xyMinMax
-            )
-            futils.two_plot(
-                [(manip_layers, False), (self.feasi_raw, True)], self.xyMinMax, dim="3d"
-            )
+            futils.two_plot([(manip_layers, False), (self.feasi_raw, True)], self.xyMinMax)
+            futils.two_plot([(manip_layers, False), (self.feasi_raw, True)], self.xyMinMax, dim="3d")
             print(manip_layers[0].shape)
             print(feasi_layers[0].shape)
             print(self.feasi_raw.shape)
@@ -56,7 +51,7 @@ class FeasibilityMap:
 
     def calc(self, Pt, Obs, Cr, Ct, section_def):
         """
-        Pt: Position of the target object (relative to the robot’s current pose)
+        Pt: Position of the target object (relative to the robot's current pose)
             - format: (x, y)
         Obs: Area list of ground obstacles
             - format: [CollisionModel, ...]
@@ -70,10 +65,12 @@ class FeasibilityMap:
             - format: (min_radius, max_radius, interval)
 
         * Distance unit: meters
-        * Angle unit: degrees
+        * Angle unit: radians
         """
+        self.free_raw = None
         ###################################
-        minCr, maxCr = Cr
+        minCr = np.degrees(Cr[0])
+        maxCr = np.degrees(Cr[1])
         if self._is_jupyter:
             print("Cut the range of `Cr` from `Fraw` and set it to `Fcut`.")
             print("min Cr: ", minCr)
@@ -147,22 +144,18 @@ class FeasibilityMap:
             futils.scatter_2d(ax1, Fcut, self.xyMinMax)
             futils.scatter_2d(ax2, Fmax, self.xyMinMax)
             for r in sections:
-                ax1.add_artist(
-                    plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False)
-                )
-                ax2.add_artist(
-                    plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False)
-                )
+                ax1.add_artist(plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False))
+                ax2.add_artist(plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False))
             fig.tight_layout()
             plt.show()
 
         ###################################
-        minCt, maxCt = Ct
+        minCt = np.degrees(Ct[0])
+        maxCt = np.degrees(Ct[1])
         if self._is_jupyter:
             print("Wipe the `Fmax` in the range of `Ct`. => `Fwiped`")
             print("min Ct: ", minCt)
             print("max Ct: ", maxCt)
-
         """
         Fwiped
         [Ct Cr x y m]
@@ -207,15 +200,10 @@ class FeasibilityMap:
                     plt.Circle(
                         (0, 0),
                         radius=np.sqrt(x * x + y * y),
-                        color=futils.manip_color(
-                            futils.normalized_value(m, max_manip, min_manip, 1, 0)
-                        ),
+                        color=futils.manip_color(futils.normalized_value(m, max_manip, min_manip, 1, 0)),
                         fill=False,
-                    )
-                )
-                ax1.add_artist(
-                    plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False)
-                )
+                    ))
+                ax1.add_artist(plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False))
                 # ax2.add_artist(
                 #     plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False)
                 # )
@@ -224,9 +212,7 @@ class FeasibilityMap:
 
         ###################################
         if self._is_jupyter:
-            print(
-                "Remove all obstacle areas from `Fwiped` with the offset of `Rsize`. => `Fclean`"
-            )
+            print("Remove all obstacle areas from `Fwiped` with the offset of `Rsize`. => `Fclean`")
         """
         Fwiped
         [Ct Cr x y m]
@@ -253,12 +239,8 @@ class FeasibilityMap:
             futils.scatter_2d(ax2, clean_plot, self.xyMinMax)
             for p in Fmax:
                 cr, x, y, m = p
-                ax1.add_artist(
-                    plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False)
-                )
-                ax2.add_artist(
-                    plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False)
-                )
+                ax1.add_artist(plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False))
+                ax2.add_artist(plt.Circle((x, y), radius=0.2 / 100.0, color="red", fill=False))
             for collision in Obs:
                 xs, ys = collision.vertices
                 xs = np.append(xs, xs[0])
@@ -284,10 +266,11 @@ class FeasibilityMap:
         Fsort = self.free_raw[s]
 
         if self._is_jupyter:
-            print("Fclean[:10]:\n", self.free_raw[:10])
-            print("Fclean[:10] (sorted):\n", Fsort[:10])
+            print("num: ", num)
+            print("Fclean[:%d]:\n" % num, self.free_raw[:num])
+            print("Fclean[:%d] (sorted):\n" % num, Fsort[:num])
 
-        candidates = Fsort[:10].copy()
+        candidates = Fsort[:num].copy()
 
         if self._is_jupyter:
             # PLOT
@@ -296,9 +279,7 @@ class FeasibilityMap:
             futils.scatter_2d(ax1, clean_plot, self.xyMinMax)
             for p in candidates:
                 ct, cr, x, y, m = p
-                ax1.add_artist(
-                    plt.Circle((x, y), radius=0.4 / 100.0, color="blue", fill=False)
-                )
+                ax1.add_artist(plt.Circle((x, y), radius=0.4 / 100.0, color="blue", fill=False))
             fig.tight_layout()
             plt.show()
 
