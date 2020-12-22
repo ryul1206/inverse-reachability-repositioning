@@ -1,17 +1,17 @@
 # ================================================
 # [ INPUT ]
 # Pt: Position of the target object
-#     - relative to: the robot coordinate
+#     - relative to: global coordinates
 #     - format: (x, y)
 # Obs: Area list of ground obstacles
-#     - relative to: the robot coordinate
+#     - relative to: global coordinates
 #     - format: [CollisionModel, ...]
 # Cr: Constraints on the approach angle
 #     - relative to: the robot heading
 #     - format: (min, max)
 #     - range: -90 ~ 90
 # Ct: Constraints on the approach angle
-#     - relative to: the target heading
+#     - relative to: global coordinates
         (Assumtion) The initial T_heading is the same as initial R_heading.
 #     - format: (min, max)
 #     - range: -180 ~ 180
@@ -22,9 +22,9 @@
 # [ OUTPUT ]
 # num_candidates
 # candidates: new x, y, heading of the robot
-#     - relative to: **previous** robot coordinate
+#     - relative to: global coordinates
 # approach_angles
-#     - relative to: new robot heading
+#     - relative to: global coordinates
 # manipulabilities
 #
 # ________________________

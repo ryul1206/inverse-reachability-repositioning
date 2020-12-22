@@ -21,7 +21,7 @@ class CollisionBase:
         self.R = rotation_2d_about_z(self._radian)
         self.inv_R = rotation_2d_about_z(-self._radian)
 
-        # vertices
+        # vertices: [[x, ...], [y, ...]]
         self.vertices = None
         self.offsets = None
 

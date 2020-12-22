@@ -20,7 +20,7 @@ def request():
 
     req.Cr.x = np.radians(0.0)
     req.Cr.y = np.radians(40.0)
-    req.Ct.x = -np.radians(180)
+    req.Ct.x = np.radians(-180)
     req.Ct.y = np.radians(180)
 
     req.section_definition.x = 0.05
@@ -29,8 +29,8 @@ def request():
 
     rospy.wait_for_service('/feasibility/find_feasibility')
     try:
-        add_two_ints = rospy.ServiceProxy('/feasibility/find_feasibility', FindFeasibility)
-        resp = add_two_ints(req)
+        feasi_proxy = rospy.ServiceProxy('/feasibility/find_feasibility', FindFeasibility)
+        resp = feasi_proxy(req)
         return resp
     except rospy.ServiceException as e:
         print("Service call failed: %s" % e)

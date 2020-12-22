@@ -12,6 +12,28 @@ layers:
             [manip, ...]]
 """
 
+# For Visualization ##############
+try:
+    import rospy
+    from visualization_msgs.msg import Marker
+    from tf.transformations import quaternion_from_euler
+    import rviz_utils
+    _id = {
+        # points
+        "Fcut": 1000,
+        "Fwiped": 1001,
+        "Fclean": 1002,
+        "candidates": 1003,
+        # box
+        "obs_real": 2000,
+        "obs_offset": 3000,
+        # sphere
+        "best": 4000,
+    }
+except ModuleNotFoundError:
+    pass
+##################################
+
 
 class FeasibilityMap:
     def __init__(self, manipulability_raw, robot_radius, is_jupyter=False):
@@ -21,6 +43,7 @@ class FeasibilityMap:
         self.feasi_raw = futils.layers_to_raw(feasi_layers)
         self.free_raw = None
 
+        self.target_center = np.array([0, 0])
         self._is_jupyter = is_jupyter
         if self._is_jupyter:
             self.xyMinMax = [-0.5, 0.5, -0.5, 0.5]
@@ -29,6 +52,16 @@ class FeasibilityMap:
             print(manip_layers[0].shape)
             print(feasi_layers[0].shape)
             print(self.feasi_raw.shape)
+        else:
+            # ROS
+            self.rviz = rospy.Publisher("/feasibility/debug_markers", Marker, queue_size=1, latch=True)
+
+    def xy_correction(self, xys):
+        """For ROS
+        xys: np.array [[x, y], ...]
+        """
+        corrected = xys + self.target_center
+        return corrected
 
     @staticmethod
     def manipulability_to_feasibility(manipulability_layers):
@@ -51,14 +84,14 @@ class FeasibilityMap:
 
     def calc(self, Pt, Obs, Cr, Ct, section_def):
         """
-        Pt: Position of the target object (relative to the robot's current pose)
+        Pt: Position of the target object (in global coordinates)
             - format: (x, y)
-        Obs: Area list of ground obstacles
+        Obs: Area list of ground obstacles (in global coordinates)
             - format: [CollisionModel, ...]
         Cr: Constraints on the approach angle (relative to the robot heading)
             - format: (min, max)
             - range: -90 ~ 90
-        Ct: Constraints on the approach angle (relative to the target heading)
+        Ct: Constraints on the approach angle (in global coordinates)
             - format: (min, max)
             - range: -180 ~ 180
         section_def: The definition of ROI (Region of interest)
@@ -68,6 +101,7 @@ class FeasibilityMap:
         * Angle unit: radians
         """
         self.free_raw = None
+        self.target_center = np.array(Pt)
         ###################################
         minCr = np.degrees(Cr[0])
         maxCr = np.degrees(Cr[1])
@@ -148,6 +182,18 @@ class FeasibilityMap:
                 ax2.add_artist(plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False))
             fig.tight_layout()
             plt.show()
+        else:
+            # ROS
+            _xys = self.xy_correction(Fcut[:, 1:3])
+            _points = [(x, y, 0.0) for x, y in _xys]
+            _ms = Fcut[:, 3]
+            max_manip = np.max(_ms)
+            _colors = [futils.manip_color(futils.normalized_value(m, max_manip, 0, 1, 0)) for m in _ms]
+            self.rviz.publish(rviz_utils.create_points(
+                _id["Fcut"],
+                _points,
+                _colors,
+            ))
 
         ###################################
         minCt = np.degrees(Ct[0])
@@ -209,6 +255,17 @@ class FeasibilityMap:
                 # )
             fig.tight_layout()
             plt.show()
+        else:
+            # ROS
+            _xys = self.xy_correction(Fwiped[:, 2:4])
+            _points = [(x, y, -0.01) for x, y in _xys]
+            _colors = [rviz_utils.t_BLUE for _ in _xys]
+            self.rviz.publish(rviz_utils.create_points(
+                _id["Fwiped"],
+                _points,
+                _colors,
+                size=0.005,
+            ))
 
         ###################################
         if self._is_jupyter:
@@ -217,14 +274,13 @@ class FeasibilityMap:
         Fwiped
         [Ct Cr x y m]
         """
-        # Pt, Obs
-        target_center = np.array(Pt)
+        # Pt(self.target_center), Obs
         Fclean = Fwiped.copy()
         if self._is_jupyter:
             print("Fclean.shape: ", Fclean.shape)
         for collision in Obs:
             collision.set_offset(self.robot_radius)
-            filter_arr = [not collision.check(p[2:4] + target_center) for p in Fclean]
+            filter_arr = [not collision.check(p[2:4] + self.target_center) for p in Fclean]
             Fclean = Fclean[filter_arr]
             if self._is_jupyter:
                 print("Fclean.shape: ", Fclean.shape)
@@ -254,10 +310,44 @@ class FeasibilityMap:
                 ax2.plot(xs, ys)
             fig.tight_layout()
             plt.show()
+        else:
+            # ROS
+            def _get_line_strip(_id, vertices, color):
+                """vertices: [[x, y], ...]"""
+                closed = np.append(vertices, [vertices[0]], axis=0)
+                _points = [(x, y, 0.0) for x, y in closed]
+                _colors = [color for _ in closed]
+                return rviz_utils.create_line(_id, _points, _colors)
+
+            # obstacles
+            idx = 0
+            for collision in Obs:
+                _vxys = np.transpose(collision.vertices)
+                _oxys = np.transpose(collision.offsets)
+                self.rviz.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
+                self.rviz.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
+                idx += 1
+            # cleaned
+            # _xys = self.xy_correction(Fclean[:, 1:3])
+            # _points = [(x, y, 0.0) for x, y in _xys]
+            # _ms = Fclean[:, 3]
+            # max_manip = np.max(_ms)
+
+            # ROS
+            _xys = self.xy_correction(Fclean[:, 2:4])
+            _points = [(x, y, 0.0) for x, y in _xys]
+            _ms = Fclean[:, 4]
+            max_manip = np.max(_ms)
+            _colors = [futils.manip_color(futils.normalized_value(m, max_manip, 0, 1, 0)) for m in _ms]
+            self.rviz.publish(rviz_utils.create_points(
+                _id["Fclean"],
+                _points,
+                _colors,
+            ))
 
     def get_candidates(self, num=1):
         """
-        self.free_raw (descending order)
+        self.free_raw (descending order) relative to target coordinates
         [Ct Cr x y m]
         """
         # Sorting in descending order
@@ -282,5 +372,32 @@ class FeasibilityMap:
                 ax1.add_artist(plt.Circle((x, y), radius=0.4 / 100.0, color="blue", fill=False))
             fig.tight_layout()
             plt.show()
+        else:
+            # ROS
+            # candidates
+            _xys = self.xy_correction(candidates[:, 2:4])
+            _points = [(xy[0], xy[1], 0.0) for xy in _xys]
+            _colors = [rviz_utils.t_PURPLE for _ in _xys]
+            self.rviz.publish(rviz_utils.create_points(
+                _id["candidates"],
+                _points,
+                _colors,
+                size=0.015,
+            ))
+            # best_point
+            Ct, Cr = candidates[0, 0:2]
+            theta = np.radians(Ct - Cr)
+            length = 0.1
+            width = 0.02
+            height = 0.02
+            best_point = rviz_utils.create_marker(
+                _id["best"],
+                _points[0],
+                quaternion_from_euler(theta, 0, 0, axes="rzxy"),
+                (length, width, height),
+                rviz_utils.t_PURPLE,
+                Marker.ARROW,
+            )
+            self.rviz.publish(best_point)
 
         return candidates

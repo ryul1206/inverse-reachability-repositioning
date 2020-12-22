@@ -23,7 +23,7 @@ class FeasibilitySolver:
         self.F = fmap.FeasibilityMap(M, self.base_radius)
 
         # START SERVICE
-        rospy.Service('~find_feasibility', FindFeasibility, self.callback_process)
+        rospy.Service('/feasibility/find_feasibility', FindFeasibility, self.callback_process)
 
     def __repr__(self):
         repr = "FeasibilitySolver\n"
@@ -61,7 +61,7 @@ class FeasibilitySolver:
 
         # OUTPUT
         candidates = self.F.get_candidates(num=5)
-        rospy.loginfo(candidates)
+        rospy.loginfo("num_candidates: %s", len(candidates))
 
         candis = []
         appros = []
@@ -70,7 +70,7 @@ class FeasibilitySolver:
             pose = Pose2D()
             pose.x = x
             pose.y = y
-            pose.theta = Ct - Cr
+            pose.theta = np.radians(Ct - Cr)
             candis.append(pose)
             appros.append(Cr)
             manips.append(m)
@@ -86,10 +86,11 @@ class FeasibilitySolver:
 def run_service():
     rospy.init_node('feasibility_solver')
     solver = FeasibilitySolver(
-        float(rospy.get_param("~base_radius", "0.3")),
-        rospy.get_param("~config", "robocare_right_arm_sample"),
+        float(rospy.get_param("/feasibility/base_radius", "0.3")),
+        rospy.get_param("/feasibility/config", "robocare_right_arm_sample"),
     )
-    rospy.loginfo(solver)
+
+    rospy.loginfo("solver return:\n%s", solver)
     rospy.spin()
 
 

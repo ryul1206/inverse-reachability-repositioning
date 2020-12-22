@@ -11,10 +11,10 @@ Find a feasible pose of robot base for good manipulability
       2. ~~[SKIP] Convert a cartesian grid `F` to a cylindrical grid `F` by linear interpolation.~~
 2. Online
    1. Input
-      1. `Pt`: Position of the target object (relative to the robot’s current pose)
-      2. `Obs`: Area list of ground obstacles
+      1. `Pt`: Position of the target object (in the global coordinates)
+      2. `Obs`: Area list of ground obstacles (in the global coordinates)
       3. `Cr`: Constraints on the approach angle (relative to the robot heading)
-      4. `Ct`: Constraints on the approach angle (relative to the target heading)
+      4. `Ct`: Constraints on the approach angle (in the global coordinates)
    2. Process
       1. Cut the range of `Cr` from `F` and set it to `Fcut`.
       2. ~~[SKIP] Scan the maximum points for the radius and angle by each circle in `Fcut`.~~
