@@ -74,6 +74,12 @@ class FeasibilitySolver:
             candis.append(pose)
             appros.append(Cr)
             manips.append(m)
+        rospy.logwarn(
+            "feasi solver:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
+            candidates[0, 0],
+            candidates[0, 1],
+            candis[0].theta,
+        )
 
         resp = FindFeasibilityResponse()
         resp.num_candidates = len(candidates)

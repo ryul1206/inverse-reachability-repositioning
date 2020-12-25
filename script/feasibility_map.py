@@ -354,15 +354,12 @@ class FeasibilityMap:
         ms = -np.transpose(self.free_raw)[4]
         s = ms.argsort()
         Fsort = self.free_raw[s]
+        candidates = Fsort[:num].copy()
 
         if self._is_jupyter:
             print("num: ", num)
             print("Fclean[:%d]:\n" % num, self.free_raw[:num])
             print("Fclean[:%d] (sorted):\n" % num, Fsort[:num])
-
-        candidates = Fsort[:num].copy()
-
-        if self._is_jupyter:
             # PLOT
             clean_plot = self.free_raw[:, 1:]
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
@@ -372,10 +369,13 @@ class FeasibilityMap:
                 ax1.add_artist(plt.Circle((x, y), radius=0.4 / 100.0, color="blue", fill=False))
             fig.tight_layout()
             plt.show()
-        else:
+
+        # candidates
+        _xys = self.xy_correction(candidates[:, 2:4])
+        candidates[:, 2:4] = _xys
+
+        if not self._is_jupyter:
             # ROS
-            # candidates
-            _xys = self.xy_correction(candidates[:, 2:4])
             _points = [(xy[0], xy[1], 0.0) for xy in _xys]
             _colors = [rviz_utils.t_PURPLE for _ in _xys]
             self.rviz.publish(rviz_utils.create_points(
@@ -387,7 +387,7 @@ class FeasibilityMap:
             # best_point
             Ct, Cr = candidates[0, 0:2]
             theta = np.radians(Ct - Cr)
-            length = 0.1
+            length = 0.5
             width = 0.02
             height = 0.02
             best_point = rviz_utils.create_marker(
@@ -395,7 +395,7 @@ class FeasibilityMap:
                 _points[0],
                 quaternion_from_euler(theta, 0, 0, axes="rzxy"),
                 (length, width, height),
-                rviz_utils.t_PURPLE,
+                rviz_utils.PURPLE,
                 Marker.ARROW,
             )
             self.rviz.publish(best_point)
