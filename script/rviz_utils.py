@@ -23,8 +23,6 @@ DEFAULT_QUAT = geo_msg.Quaternion(0.0, 0.0, 0.0, 1.0)
 def _create_marker_init(_id):
     marker = Marker()
     marker.header.frame_id = "map"
-    # marker.header.frame_id = "odom"
-    # marker.header.frame_id = "base_footprint"
     marker.header.stamp = rospy.Time()
     marker.ns = "my_namespace"
     marker.id = _id

@@ -12,7 +12,7 @@
 #     - range: -90 ~ 90
 # Ct: Constraints on the approach angle
 #     - relative to: global coordinates
-        (Assumtion) The initial T_heading is the same as initial R_heading.
+#       (Assumtion) The initial T_heading is the same as initial R_heading.
 #     - format: (min, max)
 #     - range: -180 ~ 180
 # section_def: The definition of ROI (Region of interest)
