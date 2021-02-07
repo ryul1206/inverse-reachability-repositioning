@@ -1,5 +1,24 @@
 # Find a Feasible Mobile Manipulation
 
+TODO: Change the name 'feasibility' to 'inverse reachability'
+
+```sh
+roslaunch feasible_mobile_manipulation feasibility.launch
+```
+
+## Folders
+
+- config: raw npy
+- example: ros service request
+- jupyter:
+  - fake_data: fake raw npy
+  - find_feasibility: jupyter demo (online & offline)
+  - transformation: raw npy to config (for offline)
+- raw_data: raw csv to raw npy
+- script: ros service (config required)
+
+---
+
 Find a feasible pose of robot base for good manipulability
 
 1. Offline
