@@ -1,6 +1,6 @@
 <launch>
     <!-- <arg name="config" default="robocare_right_arm_sample" /> -->
-    <arg name="config" default="socialrobot_right_arm_2021-01-25" />
+    <arg name="config" default="socialrobot_right_z75_2021-01-25" />
     <arg name="base_radius" default="0.3" />
 
     <node name="feasibility" pkg="feasible_mobile_manipulation" type="solver.py" output="screen">

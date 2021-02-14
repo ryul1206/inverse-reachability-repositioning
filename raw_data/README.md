@@ -28,7 +28,7 @@ The order of each column from CSV is:
 - Columns:
   - [0] [meter] Tool Center Point(TCP) x
   - [1] [meter] Tool Center Point(TCP) y
-  - [2] [meter] Tool Center Point(TCP) z
+  - [2] [meter] Tool Center Point(TCP) z (0.7, 0.75, 0.8)
   - [3] [meter] End-effector Point x
   - [4] [meter] End-effector Point y
   - [5] [meter] End-effector Point z
