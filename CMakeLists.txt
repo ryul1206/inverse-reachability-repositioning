@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(feasible_mobile_manipulation)
+project(ir_repositioning)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -58,7 +58,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  FindFeasibility.srv
+  Repositioning.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -107,7 +107,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES feasible_mobile_manipulation
+#  LIBRARIES inverse_reachability_repositioning
  CATKIN_DEPENDS geometry_msgs roscpp std_msgs vision_msgs
 #  DEPENDS system_lib
 )

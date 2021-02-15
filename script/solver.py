@@ -2,49 +2,37 @@
 import rospy
 import rospkg
 import numpy as np
-import feasibility_map as fmap
+import irm
 from collision import CollisionBox
 from geometry_msgs.msg import Pose2D
-from feasible_mobile_manipulation.srv import FindFeasibility, FindFeasibilityResponse
+from ir_repositioning.srv import Repositioning, RepositioningResponse
 
 
-class FeasibilitySolver:
+class InverseReachabilitySolver:
     def __init__(self, base_radius, config):
         self.base_radius = base_radius
         self.config = config
 
-        # LOAD DATA
-        path = rospkg.RosPack().get_path('feasible_mobile_manipulation')
-        M = np.load('%s/config/%s.npy' % (path, self.config))  # In this file, Cr is radians.
-        M[:, 0] = np.round(np.degrees(M[:, 0]), decimals=3)  # So, convert it to degrees.
-        self._M_shape = M.shape
+        # Load IRM data
+        pkg_dir = rospkg.RosPack().get_path("ir_repositioning")
+        file_path = "%s/config/%s.npy" % (pkg_dir, self.config)
+        self.reposition = irm.InverseReachabilityMap(file_path, self.base_radius)
 
-        # PREPARATION
-        self.F = fmap.FeasibilityMap(M, self.base_radius)
+        rospy.loginfo("IRM Loading:\n%s", self.reposition)
 
-        # START SERVICE
-        rospy.Service('/feasibility/find_feasibility', FindFeasibility, self.callback_process)
-
-    def __repr__(self):
-        repr = "FeasibilitySolver\n"
-        repr += "Configuration:\n"
-        repr += "    base_radius: %f m\n" % self.base_radius
-        repr += "    config: %s (.npy)\n" % self.config
-        repr += "        shape: %s\n" % str(self._M_shape)
-        repr += "Feasibility:\n"
-        repr += "    feasibility raw.shape: %s\n" % str(self.F.feasi_raw.shape)
-        return repr
+        # Start a service
+        rospy.Service(
+            "/ir_repositioning/find_positions", Repositioning, self.callback_process
+        )
 
     def callback_process(self, req):
         # INPUT
         Pt = (req.Pt.x, req.Pt.y)
         Obs = [
             CollisionBox(
-                (box.center.x, box.center.y),
-                box.center.theta,
-                box.size_x,
-                box.size_y,
-            ) for box in req.Obs
+                (box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y
+            )
+            for box in req.Obs
         ]
         # min, max
         Cr = (req.Cr.x, req.Cr.y)
@@ -57,10 +45,10 @@ class FeasibilitySolver:
         )
 
         # PROCESS
-        self.F.calc(Pt, Obs, Cr, Ct, section_def)
+        self.reposition.calc(Pt, Obs, Cr, Ct, section_def)
 
         # OUTPUT
-        candidates = self.F.get_candidates(num=5)
+        candidates = self.reposition.get_candidates(num=5)
         rospy.loginfo("num_candidates: %s", len(candidates))
 
         candis = []
@@ -81,7 +69,7 @@ class FeasibilitySolver:
             candis[0].theta,
         )
 
-        resp = FindFeasibilityResponse()
+        resp = RepositioningResponse()
         resp.num_candidates = len(candidates)
         resp.candidates = candis
         resp.approach_angles = appros
@@ -90,13 +78,11 @@ class FeasibilitySolver:
 
 
 def run_service():
-    rospy.init_node('feasibility_solver')
-    solver = FeasibilitySolver(
-        float(rospy.get_param("/feasibility/base_radius", "0.3")),
-        rospy.get_param("/feasibility/config", "robocare_right_arm_sample"),
+    rospy.init_node("ir_server")
+    InverseReachabilitySolver(
+        float(rospy.get_param("/ir_server/base_radius")),
+        rospy.get_param("/ir_server/config"),
     )
-
-    rospy.loginfo("solver return:\n%s", solver)
     rospy.spin()
 
 

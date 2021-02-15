@@ -2,11 +2,11 @@
 import numpy as np
 import rospy
 from vision_msgs.msg import BoundingBox2D
-from feasible_mobile_manipulation.srv import FindFeasibility, FindFeasibilityRequest
+from inverse_reachability_repositioning.srv import Repositioning, RepositioningRequest
 
 
 def request():
-    req = FindFeasibilityRequest()
+    req = RepositioningRequest()
     req.Pt.x = 0.5
     req.Pt.y = -0.3
 
@@ -27,9 +27,9 @@ def request():
     req.section_definition.y = 0.5
     req.section_definition.z = 0.02
 
-    rospy.wait_for_service('/feasibility/find_feasibility')
+    rospy.wait_for_service("/feasibility/find_feasibility")
     try:
-        feasi_proxy = rospy.ServiceProxy('/feasibility/find_feasibility', FindFeasibility)
+        feasi_proxy = rospy.ServiceProxy("/feasibility/find_feasibility", Repositioning)
         resp = feasi_proxy(req)
         return resp
     except rospy.ServiceException as e:

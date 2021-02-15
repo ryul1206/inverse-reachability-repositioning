@@ -1,7 +1,6 @@
 import rospy
 from std_msgs.msg import ColorRGBA
 from geometry_msgs import msg as geo_msg
-from visualization_msgs.msg import Marker, MarkerArray
 
 RED = ColorRGBA(1.0, 0.0, 0.0, 1.0)
 GREEN = ColorRGBA(0.0, 1.0, 0.0, 1.0)

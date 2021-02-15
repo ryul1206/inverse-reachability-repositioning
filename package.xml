@@ -1,25 +1,20 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>feasible_mobile_manipulation</name>
-  <version>0.0.0</version>
-  <description>The feasible_mobile_manipulation package</description>
+  <name>ir_repositioning</name>
+  <version>0.0.1</version>
+  <description>This package will find a proper base position to manipulation by the inverse reachability map.</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="hr@todo.todo">hr</maintainer>
-
+  <maintainer email="jung.hr.1206@gmail.com">Hong-ryul Jung</maintainer>
 
   <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>BSD 2-Clause</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/feasible_mobile_manipulation</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ir_repositioning</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
