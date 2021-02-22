@@ -6,27 +6,27 @@ This package will find a proper base position to manipulation by the inverse rea
 roslaunch ir_repositioning ir_server.launch
 ```
 
-### IRM Data
+### IRM Data (Input)
 
 - Sample: ./config/robocare_right_irm.npy
   - This sample has 7899 points.
   - The supported z of target is {0.7, 0.75, 0.8}.
 
-| Index | Name                     | Unit       | Remark           |
-| ----- | ------------------------ | ---------- | ---------------- |
-| 0     | Mobile Base x            | meter      | For query output |
-| 1     | Mobile Base y            | meter      | For query output |
-| 2     | Target Object z (height) | meter      | For query input  |
-| 3     | EEP x                    | meter      | For IK solver    |
-| 4     | EEP y                    | meter      | For IK solver    |
-| 5     | EEP z                    | meter      | For IK solver    |
-| 6     | EE Roll                  | **DEGREE** |                  |
-| 7     | EE Pitch                 | **DEGREE** |                  |
-| 8     | EE Yaw                   | **DEGREE** | Cr               |
-| 9     | Manipulability           | -          |                  |
-| 10    | Joint_0 value            | radian     |                  |
-| 11    | Joint_1 value            | radian     |                  |
-| >=12  | Joint_2... values        | radian     |                  |
+| Column Index | Name                     | Unit       | Remark           |
+| ------------ | ------------------------ | ---------- | ---------------- |
+| 0            | Mobile Base x            | meter      | For query output |
+| 1            | Mobile Base y            | meter      | For query output |
+| 2            | Target Object z (height) | meter      | For query input  |
+| 3            | EEP x                    | meter      | For IK solver    |
+| 4            | EEP y                    | meter      | For IK solver    |
+| 5            | EEP z                    | meter      | For IK solver    |
+| 6            | EE Roll                  | **DEGREE** |                  |
+| 7            | EE Pitch                 | **DEGREE** |                  |
+| 8            | EE Yaw                   | **DEGREE** | Cr               |
+| 9            | Manipulability           | -          |                  |
+| 10           | Joint_0 value            | radian     |                  |
+| 11           | Joint_1 value            | radian     |                  |
+| >=12         | Joint_2... values        | radian     |                  |
 
 ## Inverse
 

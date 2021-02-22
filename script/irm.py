@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from jupyter_utils import IDX
+from data_shape import IDX, wIDX
 import jupyter_utils as jutils
 
 """
@@ -48,7 +48,8 @@ class InverseReachabilityMap:
 
         max_x = max(abs(self.irm_raw[:, IDX["TCP_X"]])) * 1.1
         max_y = max(abs(self.irm_raw[:, IDX["TCP_Y"]])) * 1.1
-        self.xyMinMax = [-max_x, max_x, -max_y, max_y]
+        boundary = max(max_x, max_y)
+        self.xyMinMax = [-boundary, boundary, -boundary, boundary]
 
         #######
         # TODO: no layer conversion
@@ -56,22 +57,12 @@ class InverseReachabilityMap:
         # feasi_layers = self.manipulability_to_feasibility(manip_layers)
         # self.irm_raw = futils.layers_to_raw(feasi_layers)
         #######
-        self._wIDX = {
-            "Ct": 0,  # Degree
-            "Cr": 1,  # Degree
-            "Bx": 2,
-            "By": 3,
-            "M": 4,
-            "Tz": 5,
-            "EEPx": 6,
-            "J": 12,
-        }
         self.free_raw = None
 
         self.target_center = np.array([0, 0])
         if not self._is_jupyter:  # ROS
             self.rviz = rospy.Publisher(
-                "/ir_repositioning/debug_markers", Marker, queue_size=1, latch=True
+                "/ir_server/debug_markers", Marker, queue_size=1, latch=True
             )
 
     def __repr__(self):
@@ -79,7 +70,7 @@ class InverseReachabilityMap:
         repr += "Configuration:\n"
         repr += "    Base radius: %f m\n" % self.robot_radius
         repr += "    IRM data: %s\n" % self.file_path
-        repr += "       shape: %s\n" % str(self.irm_raw.shape)
+        repr += "       Shape: %s\n" % str(self.irm_raw.shape)
         return repr
 
     def xy_correction(self, xys):
@@ -91,21 +82,21 @@ class InverseReachabilityMap:
 
     def calc(self, Pt, Obs, Cr, Ct, section_def):
         """
+        * Distance unit: meters
+        * Angle unit: radians
+
         Pt: Position of the target object (in global coordinates)
             - format: (x, y)
         Obs: Area list of ground obstacles (in global coordinates)
             - format: [CollisionModel, ...]
         Cr: Constraints on the approach angle (relative to the robot heading)
             - format: (min, max)
-            - range: -90 ~ 90
+            - range: -pi ~ pi
         Ct: Constraints on the approach angle (in global coordinates)
             - format: (min, max)
-            - range: -180 ~ 180
+            - range: -pi ~ pi
         section_def: The definition of ROI (Region of interest)
             - format: (min_radius, max_radius, interval)
-
-        * Distance unit: meters
-        * Angle unit: radians
         """
         self.free_raw = None
         self.target_center = np.array(Pt)
@@ -115,27 +106,38 @@ class InverseReachabilityMap:
         ###################################
         minCr = np.degrees(Cr[0])
         maxCr = np.degrees(Cr[1])
-        if self._is_jupyter:
-            print("Cut the range of `Cr` from `Fraw` and set it to `Fcut`.")
-            print("min Cr: ", minCr)
-            print("max Cr: ", maxCr)
-
         Crs = self.irm_raw[:, IDX["Y"]]
+
+        if self._is_jupyter:
+            print("######################")
+            print("# 1. Fcut")
+            print("######################")
+            print("Cut the range of `Cr` from `Fraw` and set it to `Fcut`.")
+            print("Lower constraints on Cr: %f deg", minCr)
+            print("Upper constraints on Cr: %f deg", maxCr)
+            print("Input Cr range in degree: ", sorted(set(Crs)))
+
         filter_arr = (Crs >= minCr) * (Crs <= maxCr)
         Fcut = self.irm_raw[filter_arr].copy()
 
         # PLOT
         if self._is_jupyter:
-            fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
-            jutils.scatter_2d(ax1, jutils.filtering(self.irm_raw), self.xyMinMax)
-            jutils.scatter_2d(ax2, jutils.filtering(Fcut), self.xyMinMax)
-            fig.tight_layout()
+            fig = plt.figure()
+            ax1 = fig.add_subplot(121, projection="3d")
+            ax2 = fig.add_subplot(122, projection="3d")
+            jutils.scatter_3d(
+                ax1, jutils.filtering(self.irm_raw), self.xyMinMax, "Raw IRM"
+            )
+            jutils.scatter_3d(ax2, jutils.filtering(Fcut), self.xyMinMax, "Fcut")
             plt.show()
 
         ###################################
         # 2. Fmax
         ###################################
         if self._is_jupyter:
+            print("######################")
+            print("# 2. Fmax")
+            print("######################")
             print("And extract only the maximum as a `Fmax`.")
 
         # meter to cm
@@ -188,8 +190,8 @@ class InverseReachabilityMap:
             print("When Ct == 0.0 deg")
 
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
-            jutils.scatter_2d(ax1, jutils.filtering(Fcut), self.xyMinMax)
-            jutils.scatter_2d(ax2, jutils.filtering(Fmax), self.xyMinMax)
+            jutils.scatter_2d(ax1, jutils.filtering(Fcut), self.xyMinMax, "Fcut")
+            jutils.scatter_2d(ax2, jutils.filtering(Fmax), self.xyMinMax, "Fmax")
             for r in sections:
                 ax1.add_artist(
                     plt.Circle((0, 0), radius=r, color="gray", alpha=0.4, fill=False)
@@ -213,6 +215,9 @@ class InverseReachabilityMap:
         if self._is_jupyter:
             minCt = np.degrees(Ct[0])
             maxCt = np.degrees(Ct[1])
+            print("######################")
+            print("# 3. Fwiped")
+            print("######################")
             print("Wipe the `Fmax` in the range of `Ct`. => `Fwiped`")
             print("min Ct: ", minCt)
             print("max Ct: ", maxCt)
@@ -229,8 +234,6 @@ class InverseReachabilityMap:
             joint 1, 2, 3...
         ]
         """
-        wIDX = self._wIDX
-
         interval = 0.02  # m
         two_pi = 2.0 * np.pi
 
@@ -249,8 +252,8 @@ class InverseReachabilityMap:
 
             num_points = int(two_pi / d_rad)
             half = int(num_points / 2)
-
-            # Mapping to -180 ~ 180
+            # Circular Mapping in the range of Ct
+            # Now, it is hardcoded in -180 ~ 180.
             for idx in range(-half, num_points - half):
                 rad = d_rad * idx
                 Ct = np.degrees(rad)
@@ -263,7 +266,6 @@ class InverseReachabilityMap:
                     ([Ct, Cr_, nx, ny, m_, target_z_], eep_, joints_), axis=0
                 )
                 circle_points.append(dummy)
-                break
         Fwiped = np.array(circle_points)
 
         if self._is_jupyter:
@@ -271,8 +273,8 @@ class InverseReachabilityMap:
             print("Interval is ", interval, " [m].")
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
             wiped_plot = Fwiped[:, wIDX["Cr"] : wIDX["Tz"]]
-            jutils.scatter_2d(ax1, jutils.filtering(Fmax), self.xyMinMax)
-            jutils.scatter_2d(ax2, wiped_plot, self.xyMinMax)
+            jutils.scatter_2d(ax1, jutils.filtering(Fmax), self.xyMinMax, "Fmax")
+            jutils.scatter_2d(ax2, wiped_plot, self.xyMinMax, "Fwiped")
 
             max_manip = np.max(Fmax[:, IDX["M"]])
             min_manip = np.min(Fmax[:, IDX["M"]])
@@ -291,6 +293,7 @@ class InverseReachabilityMap:
                             jutils.scale_remapping(m, max_manip, min_manip, 1, 0)
                         ),
                         fill=False,
+                        linewidth=0.2,
                     )
                 )
                 ax1.add_artist(
@@ -311,6 +314,9 @@ class InverseReachabilityMap:
         # 4. Fclean
         ###################################
         if self._is_jupyter:
+            print("######################")
+            print("# 4. Fclean")
+            print("######################")
             print(
                 "Remove all obstacle areas from `Fwiped` with the offset of `Rsize`. => `Fclean`"
             )
@@ -339,9 +345,9 @@ class InverseReachabilityMap:
             clean_plot = Fclean[:, wIDX["Cr"] : wIDX["Tz"]]
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
 
-            jutils.scatter_2d(ax1, wiped_plot, self.xyMinMax)
+            jutils.scatter_2d(ax1, wiped_plot, self.xyMinMax, "Fwiped")
             if clean_plot.shape[0]:
-                jutils.scatter_2d(ax2, clean_plot, self.xyMinMax)
+                jutils.scatter_2d(ax2, clean_plot, self.xyMinMax, "Fclean")
             for p in Fmax:
                 cr = p[IDX["Y"]]
                 x = p[IDX["TCP_X"]]
@@ -356,13 +362,13 @@ class InverseReachabilityMap:
                     )
             for collision in Obs:
                 xs, ys = collision.vertices
-                xs = np.append(xs, xs[0])
-                ys = np.append(ys, ys[0])
+                xs = np.append(xs, xs[0]) - self.target_center[0]
+                ys = np.append(ys, ys[0]) - self.target_center[1]
                 ax1.plot(xs, ys)
                 ax2.plot(xs, ys)
                 xs, ys = collision.offsets
-                xs = np.append(xs, xs[0])
-                ys = np.append(ys, ys[0])
+                xs = np.append(xs, xs[0]) - self.target_center[0]
+                ys = np.append(ys, ys[0]) - self.target_center[1]
                 ax1.plot(xs, ys)
                 ax2.plot(xs, ys)
             fig.tight_layout()
@@ -398,40 +404,48 @@ class InverseReachabilityMap:
                 rviz_utils.create_points(_id["Fclean"], _points, _colors,)
             )
 
-    def get_candidates(self, num=1):
+    def get_candidates(self, num=-1):
         """
         self.free_raw (descending order) relative to target coordinates
         [Ct Cr x y m]
+        if num < 0, collect all max(M) points.
         """
-        wIDX = self._wIDX
-        # self._wIDX = {
-        #     "Ct": 0,  # Degree
-        #     "Cr": 1,  # Degree
-        #     "Bx": 2,
-        #     "By": 3,
-        #     "M": 4,
-        #     "Tz": 5,
-        #     "EEPx": 6,
-        #     "J": 12,
-        # }
         # Sorting in descending order
         ms = -np.transpose(self.free_raw)[wIDX["M"]]
         s = ms.argsort()
         Fsort = self.free_raw[s]
-        candidates = Fsort[:num].copy()
+        if num >= 0:
+            # Collect top N points
+            candidates = Fsort[:num].copy()
+        else:
+            # Collect all points of maximum manipulability.
+            idx = 0
+            w = wIDX["M"]
+            prev_M = Fsort[0][w]
+            for p in Fsort:
+                if prev_M > p[w]:
+                    break
+                idx += 1
+            candidates = Fsort[:idx].copy()
 
         if self._is_jupyter:
-            print("num: ", num)
-            print("Fclean[:%d]:\n" % num, self.free_raw[:num])
-            print("Fclean[:%d] (sorted):\n" % num, Fsort[:num])
+            print("num: ", len(candidates))
+            # print("Fclean[:%d]:\n" % num, self.free_raw[:num])
+            # print("Fclean[:%d] (sorted):\n" % num, Fsort[:num])
             # PLOT
             clean_plot = self.free_raw[:, wIDX["Cr"] : wIDX["Tz"]]
             fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
-            jutils.scatter_2d(ax1, clean_plot, self.xyMinMax)
+            jutils.scatter_2d(ax1, clean_plot, self.xyMinMax, "All candidates")
             for p in candidates:
-                ct, cr, x, y, m = p
+                ct, cr, x, y, m = p[: wIDX["Tz"]]
                 ax1.add_artist(
-                    plt.Circle((x, y), radius=0.4 / 100.0, color="blue", fill=False)
+                    plt.Circle(
+                        (x, y),
+                        linewidth=2,
+                        radius=0.5 / 100.0,
+                        color="red",
+                        fill=False,
+                    )
                 )
             fig.tight_layout()
             plt.show()
@@ -466,3 +480,37 @@ class InverseReachabilityMap:
             self.rviz.publish(best_point)
 
         return candidates
+
+    @staticmethod
+    def candidate_inspector(candidate_point):
+        Ct = candidate_point[wIDX["Ct"]]  # deg
+        Cr = candidate_point[wIDX["Cr"]]  # deg
+        Bx = candidate_point[wIDX["Bx"]]
+        By = candidate_point[wIDX["By"]]
+        M = candidate_point[wIDX["M"]]
+        Tz = candidate_point[wIDX["Tz"]]
+        # m, m, m, deg, deg, deg
+        EEPx, EEPy, EEPz, EEProll, EEPpitch, EEPyaw = candidate_point[
+            wIDX["EEPx"] : wIDX["J"]
+        ]
+        J = candidate_point[wIDX["J"] :]  # rad
+        heading = Ct - Cr  # deg
+
+        print("Candidate:")
+        print(
+            "\t   Base Pose2D: (x: %.3f m, y: %.3f m, theta: %.3f deg)"
+            % (Bx, By, heading)
+        )
+        print("\t            Cr: %.3f deg" % Cr)
+        print("\t            Ct: %.3f deg" % Ct)
+        print("\t      Target Z: %.3f m" % Tz)
+        print("\tManipulability: %.5f" % M)
+        print(
+            "\t  End-effecotr: (x: %.3f m, y: %.3f m, z: %.3f m)" % (EEPx, EEPy, EEPz)
+        )
+        print(
+            "\t                (r: %.3f m, p: %.3f m, y: %.3f m) based on [base_footprint]"
+            % (EEProll, EEPpitch, EEPyaw)
+        )
+        j_string = ["%.1f" % deg for deg in np.degrees(J)]
+        print("\t   Joint (deg): ", j_string)

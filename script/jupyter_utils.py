@@ -1,5 +1,6 @@
 import numpy as np
 from colour import Color
+from data_shape import IDX
 import matplotlib.pyplot as plt
 
 
@@ -8,20 +9,6 @@ raw:
     [[Cr x y manip],
      [Cr x y manip], ...]
 """
-IDX = {
-    "TCP_X": 0,
-    "TCP_Y": 1,
-    "TCP_Z": 2,
-    "EEP_X": 3,
-    "EEP_Y": 4,
-    "EEP_Z": 5,
-    "R": 6,
-    "P": 7,
-    "Y": 8,
-    "M": 9,
-    "Joint": 10,
-}
-
 
 class ColorGradient:
     def __init__(self, resolution=100):
@@ -58,7 +45,7 @@ def get_colors(ms):
     )
 
 
-def scatter_2d(ax, raw, xyMinMax, is_irm=True, dot_size=1):
+def scatter_2d(ax, raw, xyMinMax, title, is_irm=True, dot_size=1):
     """
     raw:
         [[Cr x y manip],
@@ -68,7 +55,7 @@ def scatter_2d(ax, raw, xyMinMax, is_irm=True, dot_size=1):
     Example:
         fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2)
         xyminmax = [-0.8, 0.8, -0.8, 0.8]
-        scatter_2d(ax1, filtering(rm), xyminmax, is_irm=False)
+        scatter_2d(ax1, filtering(rm), xyminmax)
         scatter_2d(ax2, filtering(irm), xyminmax)
         fig.tight_layout()
         plt.show()
@@ -78,9 +65,8 @@ def scatter_2d(ax, raw, xyMinMax, is_irm=True, dot_size=1):
 
     ax.scatter(xs, ys, c=colors, s=dot_size)
 
-    title = "IRM" if is_irm else "RM"
-    min_Cr = np.max(Crs)
-    max_Cr = np.min(Crs)
+    max_Cr = np.max(Crs)
+    min_Cr = np.min(Crs)
     ax.set_title("%s ($C_{r}$ range: %.1f~%.1f deg)" % (title, min_Cr, max_Cr))
     ax.set_xlabel("x(m)", fontsize=15)
     ax.set_ylabel("y(m)", fontsize=15)
@@ -100,7 +86,7 @@ def scatter_2d(ax, raw, xyMinMax, is_irm=True, dot_size=1):
     ax.plot(arrow_x, arrow_y)
 
 
-def scatter_3d(ax, raw, xyMinMax, is_irm=True, dot_size=2):
+def scatter_3d(ax, raw, xyMinMax, title, is_irm=True, dot_size=2):
     """
     raw:
         [[Cr x y manip],
@@ -112,7 +98,7 @@ def scatter_3d(ax, raw, xyMinMax, is_irm=True, dot_size=2):
         ax1 = fig.add_subplot(121, projection='3d')
         ax2 = fig.add_subplot(122, projection='3d')
         xyminmax = [-0.8, 0.8, -0.8, 0.8]
-        scatter_3d(ax1, filtering(rm), xyminmax, is_irm=False)
+        scatter_3d(ax1, filtering(rm), xyminmax)
         scatter_3d(ax2, filtering(irm), xyminmax)
         plt.show()
     """
@@ -125,9 +111,8 @@ def scatter_3d(ax, raw, xyMinMax, is_irm=True, dot_size=2):
     ax.set_zlabel("$C_{r}$(deg)", fontsize=15)
     ax.axis(xyMinMax)
 
-    title = "IRM" if is_irm else "RM"
-    min_Cr = np.max(Crs)
-    max_Cr = np.min(Crs)
+    max_Cr = np.max(Crs)
+    min_Cr = np.min(Crs)
     ax.set_title("%s ($C_{r}$ range: %.1f~%.1f deg)" % (title, min_Cr, max_Cr))
 
     # robot and object

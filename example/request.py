@@ -2,34 +2,43 @@
 import numpy as np
 import rospy
 from vision_msgs.msg import BoundingBox2D
-from inverse_reachability_repositioning.srv import Repositioning, RepositioningRequest
+from ir_repositioning.srv import Repositioning, RepositioningRequest
+
+"""
+[SERVICE RUN]
+roslaunch ir_repositioning ir_server.launch
+
+[REQUEST EXAMPLE]
+rosrun ir_repositioning request.py
+"""
 
 
 def request():
     req = RepositioningRequest()
-    req.Pt.x = 0.5
-    req.Pt.y = -0.3
+    req.Pt.x = 0.3
+    req.Pt.y = 0.1
 
     box = BoundingBox2D()
-    box.center.x = 0.2
+    box.center.x = 0.1
     box.center.y = 0.0
-    box.center.theta = np.radians(0.0)
-    box.size_x = 0.45
-    box.size_y = 1.0
+    box.center.theta = np.radians(30.0)
+    box.size_x = 0.5
+    box.size_y = 0.3
     req.Obs = [box]
 
     req.Cr.x = np.radians(0.0)
-    req.Cr.y = np.radians(40.0)
+    req.Cr.y = np.radians(30.1)
+
     req.Ct.x = np.radians(-180)
     req.Ct.y = np.radians(180)
 
     req.section_definition.x = 0.05
-    req.section_definition.y = 0.5
+    req.section_definition.y = 1.0
     req.section_definition.z = 0.02
 
-    rospy.wait_for_service("/feasibility/find_feasibility")
+    rospy.wait_for_service("/ir_server/find_positions")
     try:
-        feasi_proxy = rospy.ServiceProxy("/feasibility/find_feasibility", Repositioning)
+        feasi_proxy = rospy.ServiceProxy("/ir_server/find_positions", Repositioning)
         resp = feasi_proxy(req)
         return resp
     except rospy.ServiceException as e:

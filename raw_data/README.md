@@ -10,21 +10,21 @@ Columns
 - TCP: Tool Center Point
 - EEP: End-effector Point
 
-| Index | Name              | Unit       | Remark           |
-| ----- | ----------------- | ---------- | ---------------- |
-| 0     | TCP x             | meter      | For query output |
-| 1     | TCP y             | meter      | For query output |
-| 2     | TCP z             | meter      | For query input  |
-| 3     | EEP x             | meter      | For IK solver    |
-| 4     | EEP y             | meter      | For IK solver    |
-| 5     | EEP z             | meter      | For IK solver    |
-| 6     | EE Roll           | **DEGREE** |                  |
-| 7     | EE Pitch          | **DEGREE** |                  |
-| 8     | EE Yaw            | **DEGREE** | Cr               |
-| 9     | Manipulability    | -          |                  |
-| 10    | Joint_0 value     | radian     |                  |
-| 11    | Joint_1 value     | radian     |                  |
-| >=12  | Joint_2... values | radian     |                  |
+| Column Index | Name              | Unit       | Remark           |
+| ------------ | ----------------- | ---------- | ---------------- |
+| 0            | TCP x             | meter      | For query output |
+| 1            | TCP y             | meter      | For query output |
+| 2            | TCP z             | meter      | For query input  |
+| 3            | EEP x             | meter      | For IK solver    |
+| 4            | EEP y             | meter      | For IK solver    |
+| 5            | EEP z             | meter      | For IK solver    |
+| 6            | EE Roll           | **DEGREE** |                  |
+| 7            | EE Pitch          | **DEGREE** |                  |
+| 8            | EE Yaw            | **DEGREE** | Cr               |
+| 9            | Manipulability    | -          |                  |
+| 10           | Joint_0 value     | radian     |                  |
+| 11           | Joint_1 value     | radian     |                  |
+| >=12         | Joint_2... values | radian     |                  |
 
 ### (CSV Sample) Robocare Right Arm
 

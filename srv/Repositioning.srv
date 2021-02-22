@@ -45,6 +45,9 @@ geometry_msgs/Vector3 Ct
 # x is min_radius, y is max_radius, z is interval
 geometry_msgs/Vector3 section_definition
 
+# For the cost function in the get_candidates()
+float32 preferred_heading
+
 ---
 
 # The number of candidates
@@ -58,6 +61,11 @@ geometry_msgs/Pose2D[] candidates
 #       .    ^    .
 #         .  |  .
 #  90 <------|------> -90
-#     approach angle
+#     approach angle [radian]
 float64[] approach_angles
 float64[] manipulabilities
+
+# eef
+geometry_msgs/Pose[] 
+# radian
+sensor_msgs/JointState[] joint_angles

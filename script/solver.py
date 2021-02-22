@@ -3,8 +3,10 @@ import rospy
 import rospkg
 import numpy as np
 import irm
+import copy
 from collision import CollisionBox
 from geometry_msgs.msg import Pose2D
+from sensor_msgs.msg import JointState
 from ir_repositioning.srv import Repositioning, RepositioningResponse
 
 
@@ -21,9 +23,7 @@ class InverseReachabilitySolver:
         rospy.loginfo("IRM Loading:\n%s", self.reposition)
 
         # Start a service
-        rospy.Service(
-            "/ir_repositioning/find_positions", Repositioning, self.callback_process
-        )
+        rospy.Service("/ir_server/find_positions", Repositioning, self.callback_process)
 
     def callback_process(self, req):
         # INPUT
@@ -48,13 +48,38 @@ class InverseReachabilitySolver:
         self.reposition.calc(Pt, Obs, Cr, Ct, section_def)
 
         # OUTPUT
-        candidates = self.reposition.get_candidates(num=5)
+        candidates = self.reposition.get_candidates(num=-1)
         rospy.loginfo("num_candidates: %s", len(candidates))
 
-        candis = []
-        appros = []
-        manips = []
-        for Ct, Cr, x, y, m in candidates:
+        """
+        Candidates:
+        | Column Index | Name                     | Unit       | Remark           |
+        | ------------ | ------------------------ | ---------- | ---------------- |
+        | 0            | Ct                       | **DEGREE** |                  |
+        | 1            | Cr                       | **DEGREE** | EE Yaw           |
+        | 2            | Mobile Base x            | meter      | For query output |
+        | 3            | Mobile Base y            | meter      | For query output |
+        | 4            | Manipulability           | -          |                  |
+        | 5            | Target Object z (height) | meter      | For query input  |
+        | 6            | EEP x                    | meter      | Based on base_footprint |
+        | 7            | EEP y                    | meter      | Based on base_footprint |
+        | 8            | EEP z                    | meter      | Based on base_footprint |
+        | 9            | EE Roll                  | **DEGREE** | Based on base_footprint |
+        | 10           | EE Pitch                 | **DEGREE** | Based on base_footprint |
+        | 11           | EE Yaw                   | **DEGREE** | Cr, Based on base_footprint |
+        | 12           | Joint_0 value            | radian     |                  |
+        | 13           | Joint_1 value            | radian     |                  |
+        | >=14         | Joint_2... values        | radian     |                  |
+        """
+
+        candis = []  # geometry_msgs/Pose2D[]
+        appros = []  # float64[]
+        manips = []  # float64[]
+        joint_angles = []  # sensor_msgs/JointState[]
+        for data in candidates:
+            Ct, Cr, x, y, m = data[:5]
+            joints = data[12:]
+
             pose = Pose2D()
             pose.x = x
             pose.y = y
@@ -62,8 +87,9 @@ class InverseReachabilitySolver:
             candis.append(pose)
             appros.append(Cr)
             manips.append(m)
+            joint_angles.append(copy.copy(joints))
         rospy.logwarn(
-            "feasi solver:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
+            "IR_Solver Result Sample:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
             candidates[0, 0],
             candidates[0, 1],
             candis[0].theta,
@@ -74,6 +100,10 @@ class InverseReachabilitySolver:
         resp.candidates = candis
         resp.approach_angles = appros
         resp.manipulabilities = manips
+        for js in joint_angles:
+            jmsg = JointState()
+            jmsg.position = js
+            resp.joint_angles.append(jmsg)
         return resp
 
 
