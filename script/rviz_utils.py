@@ -34,15 +34,11 @@ def create_marker(_id, position, orientation, scale, color_rgba, shape):
     # http://docs.ros.org/api/visualization_msgs/html/msg/Marker.html
     marker = _create_marker_init(_id)
     if type(color_rgba) != ColorRGBA:
-        color_rgba = ColorRGBA(
-            color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]
-        )
+        color_rgba = ColorRGBA(color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3])
     if type(position) != geo_msg.Point:
         position = geo_msg.Point(position[0], position[1], position[2])
     if type(orientation) != geo_msg.Quaternion:
-        orientation = geo_msg.Quaternion(
-            orientation[0], orientation[1], orientation[2], orientation[3]
-        )
+        orientation = geo_msg.Quaternion(orientation[0], orientation[1], orientation[2], orientation[3])
     if type(scale) != geo_msg.Vector3:
         scale = geo_msg.Vector3(scale[0], scale[1], scale[2])
     marker.type = shape

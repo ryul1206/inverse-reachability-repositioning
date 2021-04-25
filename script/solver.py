@@ -28,12 +28,7 @@ class InverseReachabilitySolver:
     def callback_process(self, req):
         # INPUT
         Pt = (req.Pt.x, req.Pt.y)
-        Obs = [
-            CollisionBox(
-                (box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y
-            )
-            for box in req.Obs
-        ]
+        Obs = [CollisionBox((box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y) for box in req.Obs]
         # min, max
         Cr = (req.Cr.x, req.Cr.y)
         Ct = (req.Ct.x, req.Ct.y)
@@ -50,7 +45,6 @@ class InverseReachabilitySolver:
         # OUTPUT
         candidates = self.reposition.get_candidates(num=-1)
         rospy.loginfo("num_candidates: %s", len(candidates))
-
         """
         Candidates:
         | Column Index | Name                     | Unit       | Remark           |
@@ -88,12 +82,15 @@ class InverseReachabilitySolver:
             appros.append(Cr)
             manips.append(m)
             joint_angles.append(copy.copy(joints))
-        rospy.logwarn(
-            "IR_Solver Result Sample:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
-            candidates[0, 0],
-            candidates[0, 1],
-            candis[0].theta,
-        )
+
+
+        if candidates:
+            rospy.logwarn(
+                "IR_Solver Result Sample:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
+                candidates[0, 0],
+                candidates[0, 1],
+                candis[0].theta,
+            )
 
         resp = RepositioningResponse()
         resp.num_candidates = len(candidates)

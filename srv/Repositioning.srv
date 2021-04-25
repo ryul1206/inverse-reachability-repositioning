@@ -66,6 +66,6 @@ float64[] approach_angles
 float64[] manipulabilities
 
 # eef
-geometry_msgs/Pose[] 
+# geometry_msgs/Pose[]
 # radian
 sensor_msgs/JointState[] joint_angles
