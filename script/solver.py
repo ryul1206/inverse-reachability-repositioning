@@ -83,8 +83,8 @@ class InverseReachabilitySolver:
             manips.append(m)
             joint_angles.append(copy.copy(joints))
 
-
-        if candidates:
+        print(type(candidates))
+        if len(candidates):
             rospy.logwarn(
                 "IR_Solver Result Sample:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
                 candidates[0, 0],

@@ -59,6 +59,7 @@ class InverseReachabilityMap:
         self.free_raw = None
 
         self.target_center = np.array([0, 0])
+        self.rviz_clearing_idx_max = 5
         if not self._is_jupyter:  # ROS
             self.rviz = rospy.Publisher("/ir_server/debug_markers", Marker, queue_size=1, latch=True)
 
@@ -131,7 +132,7 @@ class InverseReachabilityMap:
         ###################################
         if self._is_jupyter and verbose:
             print("######################")
-            print("# 2. Fmax")
+            print("# 2. Fmax (skip)")
             print("######################")
             print("And extract only the maximum as a `Fmax`.")
 
@@ -142,41 +143,42 @@ class InverseReachabilityMap:
         sections = np.array(range(min_radius, max_radius, interval))
         # cm to meter
         sections = sections / 100.0
-        sq_sections = np.square(sections)
-        if self._is_jupyter and verbose:
-            print("sq_sections.shape: ", sq_sections.shape)
+        # sq_sections = np.square(sections)
+        # if self._is_jupyter and verbose:
+        #     print("sq_sections.shape: ", sq_sections.shape)
 
-        num_sections = len(sq_sections) - 1
-        Fmax = np.zeros((num_sections, self.irm_raw.shape[1]), dtype=np.float32)
+        # num_sections = len(sq_sections) - 1
+        # Fmax = np.zeros((num_sections, self.irm_raw.shape[1]), dtype=np.float32)
 
-        def find_idx(ascending, value):
-            # Check range
-            if ascending[0] > value or ascending[-1] < value:
-                return None
-            # Binary search
-            Li = 0
-            Ri = len(ascending) - 1
-            while (Li + 1) < Ri:
-                mid = int((Li + Ri) / 2)
-                if value < ascending[mid]:
-                    Ri = mid
-                else:
-                    Li = mid
-            return Li
+        # def find_idx(ascending, value):
+        #     # Check range
+        #     if ascending[0] > value or ascending[-1] < value:
+        #         return None
+        #     # Binary search
+        #     Li = 0
+        #     Ri = len(ascending) - 1
+        #     while (Li + 1) < Ri:
+        #         mid = int((Li + Ri) / 2)
+        #         if value < ascending[mid]:
+        #             Ri = mid
+        #         else:
+        #             Li = mid
+        #     return Li
 
-        for point in Fcut:
-            x, y = point[IDX["TCP_X"]:IDX["TCP_Z"]]
-            sq_radius = x * x + y * y
-            idx = find_idx(sq_sections, sq_radius)
-            if idx is not None:
-                prev_manip = Fmax[idx, IDX["M"]]
-                new_manip = point[IDX["M"]]
-                if prev_manip < new_manip:
-                    Fmax[idx] = point.copy()
+        # for point in Fcut:
+        #     x, y = point[IDX["TCP_X"]:IDX["TCP_Z"]]
+        #     sq_radius = x * x + y * y
+        #     idx = find_idx(sq_sections, sq_radius)
+        #     if idx is not None:
+        #         prev_manip = Fmax[idx, IDX["M"]]
+        #         new_manip = point[IDX["M"]]
+        #         if prev_manip < new_manip:
+        #             Fmax[idx] = point.copy()
 
-        # Trim the zero-sections
-        trimmed = Fmax[:, IDX["M"]] > 0
-        Fmax = Fmax[trimmed]
+        # # Trim the zero-sections
+        # trimmed = Fmax[:, IDX["M"]] > 0
+        # Fmax = Fmax[trimmed]
+        Fmax = Fcut
 
         # PLOT
         if self._is_jupyter:
@@ -231,7 +233,7 @@ class InverseReachabilityMap:
             joint 1, 2, 3...
         ]
         """
-        interval = 0.01  # m
+        interval = 0.03  # m
         two_pi = 2.0 * np.pi
 
         circle_points = []
@@ -250,7 +252,7 @@ class InverseReachabilityMap:
             num_points = int(two_pi / d_rad)
             half = int(num_points / 2)
             # Circular Mapping in the range of Ct
-            ### # Now, it is hardcoded in -180 ~ 180. (X)
+            # # Now, it is hardcoded in -180 ~ 180. (X)
             for idx in range(-half, num_points - half):
                 rad = d_rad * idx
                 Ct = np.degrees(rad)
@@ -401,6 +403,10 @@ class InverseReachabilityMap:
                 self.rviz.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
                 self.rviz.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
                 idx += 1
+            empty_box = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+            for _i in xrange(idx, self.rviz_clearing_idx_max):
+                self.rviz.publish(_get_line_strip(_id["obs_real"] + idx, empty_box, rviz_utils.t_NO_COLOR))
+                self.rviz.publish(_get_line_strip(_id["obs_offset"] + idx, empty_box, rviz_utils.t_NO_COLOR))
 
             # ROS
             _xys = self.xy_correction(Fclean[:, wIDX["Bx"]:wIDX["M"]])
@@ -514,7 +520,7 @@ class InverseReachabilityMap:
         print("\t      Target Z: %.3f m" % Tz)
         print("\tManipulability: %.5f" % M)
         print("\t  End-effecotr: (x: %.3f m, y: %.3f m, z: %.3f m)" % (EEPx, EEPy, EEPz))
-        print("\t                (r: %.3f m, p: %.3f m, y: %.3f m) based on [base_footprint]" % (EEProll, EEPpitch,
-                                                                                                 EEPyaw))
+        print("\t                (r: %.3f m, p: %.3f m, y: %.3f m) based on [base_footprint]" %
+              (EEProll, EEPpitch, EEPyaw))
         j_string = ["%.1f" % deg for deg in np.degrees(J)]
         print("\t   Joint (deg): ", j_string)

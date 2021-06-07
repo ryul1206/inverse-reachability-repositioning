@@ -16,6 +16,7 @@ t_BLUE = ColorRGBA(0.0, 0.0, 1.0, 0.5)
 t_YELLOW = ColorRGBA(1.0, 1.0, 0.0, 0.5)
 t_PURPLE = ColorRGBA(0.78, 0.2, 1.0, 0.5)
 t_WHITE = ColorRGBA(1.0, 1.0, 1.0, 0.5)
+t_NO_COLOR = ColorRGBA(1.0, 1.0, 1.0, 0.0)
 
 DEFAULT_QUAT = geo_msg.Quaternion(0.0, 0.0, 0.0, 1.0)
 
