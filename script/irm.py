@@ -61,7 +61,8 @@ class InverseReachabilityMap:
         self.target_center = np.array([0, 0])
         self.rviz_clearing_idx_max = 5
         if not self._is_jupyter:  # ROS
-            self.rviz = rospy.Publisher("/ir_server/debug_markers", Marker, queue_size=1, latch=True)
+            self.rviz_debug = rospy.Publisher("/ir_server/debug_markers", Marker, queue_size=1, latch=True)
+            self.rviz_best = rospy.Publisher("/ir_server/best_base", Marker, queue_size=1, latch=True)
 
     def __repr__(self):
         repr = "< Inverse Reachability Solver >\n"
@@ -201,8 +202,9 @@ class InverseReachabilityMap:
             _points = [(x, y, 0.0) for x, y in _xys]
             _ms = Fcut[:, IDX["M"]]
             if _ms.size:
-                _colors = jutils.get_colors(_ms)
-                self.rviz.publish(rviz_utils.create_points(
+                # _colors = jutils.get_colors(_ms)
+                _colors = [rviz_utils.t_DARK for _ in _xys]
+                self.rviz_debug.publish(rviz_utils.create_points(
                     _id["Fcut"],
                     _points,
                     _colors,
@@ -301,7 +303,7 @@ class InverseReachabilityMap:
             _xys = self.xy_correction(Fwiped[:, wIDX["Bx"]:wIDX["M"]])
             _points = [(x, y, -0.01) for x, y in _xys]
             _colors = [rviz_utils.t_BLUE for _ in _xys]
-            self.rviz.publish(rviz_utils.create_points(
+            self.rviz_debug.publish(rviz_utils.create_points(
                 _id["Fwiped"],
                 _points,
                 _colors,
@@ -400,13 +402,13 @@ class InverseReachabilityMap:
             for collision in Obs:
                 _vxys = np.transpose(collision.vertices)
                 _oxys = np.transpose(collision.offsets)
-                self.rviz.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
-                self.rviz.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
+                self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
+                self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
                 idx += 1
             empty_box = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
             for _i in xrange(idx, self.rviz_clearing_idx_max):
-                self.rviz.publish(_get_line_strip(_id["obs_real"] + idx, empty_box, rviz_utils.t_NO_COLOR))
-                self.rviz.publish(_get_line_strip(_id["obs_offset"] + idx, empty_box, rviz_utils.t_NO_COLOR))
+                self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, empty_box, rviz_utils.t_NO_COLOR))
+                self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, empty_box, rviz_utils.t_NO_COLOR))
 
             # ROS
             _xys = self.xy_correction(Fclean[:, wIDX["Bx"]:wIDX["M"]])
@@ -414,7 +416,7 @@ class InverseReachabilityMap:
             _ms = Fclean[:, wIDX["M"]]
             if _ms.size:
                 _colors = jutils.get_colors(_ms)
-                self.rviz.publish(rviz_utils.create_points(
+                self.rviz_debug.publish(rviz_utils.create_points(
                     _id["Fclean"],
                     _points,
                     _colors,
@@ -475,7 +477,7 @@ class InverseReachabilityMap:
             # ROS
             _points = [(xy[0], xy[1], 0.0) for xy in _xys]
             _colors = [rviz_utils.t_PURPLE for _ in _xys]
-            self.rviz.publish(rviz_utils.create_points(
+            self.rviz_debug.publish(rviz_utils.create_points(
                 _id["candidates"],
                 _points,
                 _colors,
@@ -495,7 +497,7 @@ class InverseReachabilityMap:
                 rviz_utils.PURPLE,
                 Marker.ARROW,
             )
-            self.rviz.publish(best_point)
+            self.rviz_best.publish(best_point)
         if candidates is None:
             candidates = []
         return candidates

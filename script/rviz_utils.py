@@ -10,6 +10,7 @@ YELLOW = ColorRGBA(1.0, 1.0, 0.0, 1.0)
 PURPLE = ColorRGBA(0.78, 0.2, 1.0, 1.0)
 WHITE = ColorRGBA(1.0, 1.0, 1.0, 1.0)
 
+t_DARK = ColorRGBA(0.1, 0.1, 0.1, 0.5)
 t_RED = ColorRGBA(1.0, 0.0, 0.0, 0.5)
 t_GREEN = ColorRGBA(0.0, 1.0, 0.0, 0.5)
 t_BLUE = ColorRGBA(0.0, 0.0, 1.0, 0.5)
