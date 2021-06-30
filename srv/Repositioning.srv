@@ -1,4 +1,10 @@
 # ================================================
+#
+#                                  ^ y
+#     |> robot,    |--  tool center tip   ->x
+#
+#
+#
 # [ INPUT ]
 # Pt: Position of the target object
 #     - relative to: global coordinates
@@ -9,12 +15,12 @@
 # Cr: Constraints on the approach angle
 #     - relative to: the robot heading
 #     - format: (min, max)
-#     - range: -90 ~ 90
+#     - range: -90 ~ 90 in RADIAN
 # Ct: Constraints on the approach angle
 #     - relative to: global coordinates
 #       (Assumtion) The initial T_heading is the same as initial R_heading.
 #     - format: (min, max)
-#     - range: -180 ~ 180
+#     - range: -180 ~ 180 in RADIAN
 # section_def: The definition of ROI (Region of interest)
 #     - relative to: the center of the target
 #     - format: (min_radius, max_radius, interval)
@@ -32,13 +38,25 @@
 # * Angle unit: radians
 # ================================================
 
-# x, y (ignore theta)
+# hand
+uint8 hand_type
+uint8 RIGHT_HAND = 0
+uint8 LEFT_HAND  = 1
+uint8 DUAL_HAND  = 2
+# The dual hand version has a different process.
+
+# x, y (ignore theta) <- Tool tip center
+# If dual_hand, Pt is target_center.
 geometry_msgs/Pose2D Pt
+# Available only when dual_hand
+float32 dual_hand_width
 
 # These will be collision models.
 vision_msgs/BoundingBox2D[] Obs
 
 # x is min, y is max (ignore z)
+# If dual_hand, Cr = +/- 90deg.
+#               Ct = narrow direction of the box.
 geometry_msgs/Vector3 Cr
 geometry_msgs/Vector3 Ct
 
@@ -46,7 +64,7 @@ geometry_msgs/Vector3 Ct
 geometry_msgs/Vector3 section_definition
 
 # For the cost function in the get_candidates()
-float32 preferred_heading
+# float32 preferred_heading
 
 ---
 

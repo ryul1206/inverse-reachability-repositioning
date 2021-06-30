@@ -3,7 +3,6 @@ import numpy as np
 import rospy
 from vision_msgs.msg import BoundingBox2D
 from ir_repositioning.srv import Repositioning, RepositioningRequest
-
 """
 [SERVICE RUN]
 roslaunch ir_repositioning ir_server.launch
@@ -15,6 +14,8 @@ rosrun ir_repositioning request.py
 
 def request():
     req = RepositioningRequest()
+    req.hand_type = req.LEFT_HAND
+
     req.Pt.x = 0.3
     req.Pt.y = 0.1
 
