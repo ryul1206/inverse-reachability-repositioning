@@ -20,6 +20,11 @@ try:
     import rviz_utils
 
     _id = {
+        "R_Fcut": 1100,
+        "R_Fcut_rot": 1101,
+        "R_Fcut_look_fw": 1102,
+        "L_Fcut_look_fw": 1103,
+        "Fdual": 1104,
         # points
         "Fcut": 1000,
         "Fwiped": 1001,
@@ -186,7 +191,7 @@ class InverseReachabilityMap:
                 ))
         return Fmax
 
-    def get_Fwiped(self, minCt, maxCt, Fmax, verbose):
+    def get_Fwiped(self, minCt, maxCt, Fmax, verbose, interval=0.03):
         """min/max Ct is in degree."""
         if self._is_jupyter and verbose:
             print("######################")
@@ -208,7 +213,7 @@ class InverseReachabilityMap:
             joint 1, 2, 3...
         ]
         """
-        interval = 0.03  # m
+        # interval = 0.03  # m
         two_pi = 2.0 * np.pi
 
         circle_points = []
@@ -273,6 +278,10 @@ class InverseReachabilityMap:
                 plt.show()
         else:
             # ROS
+            # rospy.loginfo(Fwiped.shape)
+            # _xy_ = Fwiped[:, wIDX["Bx"]:wIDX["M"]]
+            # rospy.loginfo(_xy_.shape)
+
             _xys = self.xy_correction(Fwiped[:, wIDX["Bx"]:wIDX["M"]])
             _points = [(x, y, -0.01) for x, y in _xys]
             _colors = [rviz_utils.t_BLUE for _ in _xys]
@@ -283,6 +292,32 @@ class InverseReachabilityMap:
                 size=0.005,
             ))
         return Fwiped
+
+    def debug_F(self, F, color_rgba, name, z, size):
+        """Fraw only. Fwiped has different idx."""
+        # _xys = self.xy_correction(F[:, wIDX["Bx"]:wIDX["M"]])
+        _xys = self.xy_correction(F[:, IDX["TCP_X"]:IDX["TCP_Z"]])
+        _points = [(x, y, z) for x, y in _xys]
+        _colors = [color_rgba for _ in _xys]
+        self.rviz_debug.publish(rviz_utils.create_points(
+            _id[name],
+            _points,
+            _colors,
+            size=size,
+        ))
+
+    def debug_Fwiped(self, Fwiped, color_rgba, name, z, size):
+        """Fraw only. Fwiped has different idx."""
+        # _xys = self.xy_correction(F[:, wIDX["Bx"]:wIDX["M"]])
+        _xys = self.xy_correction(Fwiped[:, wIDX["Bx"]:wIDX["M"]])
+        _points = [(x, y, z) for x, y in _xys]
+        _colors = [color_rgba for _ in _xys]
+        self.rviz_debug.publish(rviz_utils.create_points(
+            _id[name],
+            _points,
+            _colors,
+            size=size,
+        ))
 
     def get_Fclean(self, Obs, Fwiped, verbose):
         """target_center must be setted."""
@@ -399,7 +434,7 @@ class InverseReachabilityMap:
                 ))
         return free_raw
 
-    def get_candidates(self, free_raw, num=-1, verbose=False):
+    def get_candidates(self, free_raw, num=-1, is_dual=False, verbose=False):
         """
         free_raw (descending order) relative to target coordinates
         [Ct Cr x y m]
@@ -462,7 +497,7 @@ class InverseReachabilityMap:
             ))
             # best_point
             Ct, Cr = candidates[0, :wIDX["Bx"]]
-            theta = np.radians(Ct - Cr)
+            theta = np.radians((Ct - Cr) if not is_dual else Ct)
             length = 0.2
             width = 0.03
             height = 0.03
@@ -499,7 +534,8 @@ class InverseReachabilityMap:
         print("\t      Target Z: %.3f m" % Tz)
         print("\tManipulability: %.5f" % M)
         print("\t  End-effecotr: (x: %.3f m, y: %.3f m, z: %.3f m)" % (EEPx, EEPy, EEPz))
-        print("\t                (r: %.3f m, p: %.3f m, y: %.3f m) based on [base_footprint]" % (EEProll, EEPpitch, EEPyaw))
+        print("\t                (r: %.3f m, p: %.3f m, y: %.3f m) based on [base_footprint]" %
+              (EEProll, EEPpitch, EEPyaw))
         j_string = ["%.1f" % deg for deg in np.degrees(J)]
         print("\t   Joint (deg): ", j_string)
 
