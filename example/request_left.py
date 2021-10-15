@@ -37,6 +37,10 @@ def request():
     req.section_definition.y = 1.0
     req.section_definition.z = 0.02
 
+    req.max_dist = 1024.0
+    req.collision_offset = 0.3
+    req.strict_dual = False
+
     rospy.wait_for_service("/ir_server/find_positions")
     try:
         feasi_proxy = rospy.ServiceProxy("/ir_server/find_positions", Repositioning)

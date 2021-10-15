@@ -5,7 +5,7 @@ import numpy as np
 import irm
 import copy
 import rviz_utils
-from data_shape import IDX  # , wIDX  # wIDX: Fwiped
+from data_shape import IDX, wIDX  # wIDX: Fwiped
 from collision import CollisionBox
 from geometry_msgs.msg import Pose2D
 from sensor_msgs.msg import JointState
@@ -13,22 +13,21 @@ from ir_repositioning.srv import Repositioning, RepositioningResponse
 
 
 class InverseReachabilitySolver:
-    # def __init__(self, base_radius):
-    def __init__(self):
-        # self.config = config
+    def __init__(self, base_radius, config):
+        self.base_radius = base_radius
+        self.config = config
 
         # Load IRM data
         pkg_dir = rospkg.RosPack().get_path("ir_repositioning")
-        self.reposition_R = irm.InverseReachabilityMap("%s/config/robocare_right_irm.npy" % pkg_dir)
-        self.reposition_L = irm.InverseReachabilityMap("%s/config/robocare_left_irm.npy" % pkg_dir)
+        file_path = "%s/config/%s.npy" % (pkg_dir, self.config)
+        self.reposition = irm.InverseReachabilityMap(file_path, self.base_radius)
 
-        rospy.loginfo("IRM Loading (Right):\n%s", self.reposition_R)
-        rospy.loginfo("IRM Loading (Left):\n%s", self.reposition_L)
+        rospy.loginfo("IRM Loading:\n%s", self.reposition)
 
         # Start a service
         rospy.Service("/ir_server/find_positions", Repositioning, self.callback_process)
 
-    def solv_one_hand(self, req, is_right=None):
+    def solv_one_hand(self, req):
         # INPUT
         Pt = (req.Pt.x, req.Pt.y)
         Obs = [CollisionBox((box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y) for box in req.Obs]
@@ -43,11 +42,13 @@ class InverseReachabilitySolver:
             req.section_definition.z,
         )
 
-        if is_right is None:
+        if req.hand_type == req.RIGHT_HAND:
+            is_right = True
+        elif req.hand_type == req.LEFT_HAND:
+            is_right = False
+        else:
             raise NotImplementedError()
-        repos = self.reposition_R if is_right else self.reposition_L
-
-        candidates = repos.calc(Pt, Obs, Cr, Ct, section_def, req.collision_offset, req.max_dist)
+        candidates = self.reposition.calc(Pt, Obs, Cr, Ct, section_def, is_right)
         return candidates
 
     def solv_dual_hand(self, req, verbose=False):
@@ -55,98 +56,95 @@ class InverseReachabilitySolver:
 
         # Right hand
         # right_Cr = (89., 91.)
-        R_Fcut = self.reposition_R.get_Fcut(89., 91., req.max_dist, verbose)
-        L_Fcut = self.reposition_L.get_Fcut(-91., -89., req.max_dist, verbose)
+        R_Fcut = self.reposition.get_Fcut(89., 91., verbose)
 
         obj_center = (req.Pt.x, req.Pt.y)
-        self.reposition_R.target_center = np.array(obj_center)
-        self.reposition_L.target_center = np.array(obj_center)
-        # self.reposition_R.debug_F(R_Fcut, rviz_utils.t_BLUE, "R_Fcut_look_fw", -0.01, 0.03)
-        # self.reposition_L.debug_F(L_Fcut, rviz_utils.t_RED, "L_Fcut_look_fw", -0.02, 0.02)
+        self.reposition.target_center = np.array(obj_center)
+        # self.reposition.debug_F(R_Fcut, rviz_utils.RED, "R_Fcut", 0.01, 0.04)
 
-        # Change: hand_x_align -> base_x_align
         R_Fcut_look_fw = R_Fcut.copy()
         R_Fcut_look_fw[:, IDX["TCP_X"]] = -R_Fcut[:, IDX["TCP_Y"]]
         R_Fcut_look_fw[:, IDX["TCP_Y"]] = R_Fcut[:, IDX["TCP_X"]]
-        L_Fcut_look_fw = L_Fcut.copy()
-        L_Fcut_look_fw[:, IDX["TCP_X"]] = L_Fcut[:, IDX["TCP_Y"]]
-        L_Fcut_look_fw[:, IDX["TCP_Y"]] = -L_Fcut[:, IDX["TCP_X"]]
+
+        # self.reposition.debug_F(R_Fcut_look_fw, rviz_utils.t_PURPLE, "R_Fcut_rot", 0.05, 0.04)
+
+        # Left hand
+        L_Fcut_look_fw = R_Fcut_look_fw.copy()
+        L_Fcut_look_fw[:, IDX["TCP_Y"]] *= -1.0
 
         # object width
         obj_width = req.dual_hand_width
-        corrected_width = np.ceil(obj_width / data_interval) * data_interval
+        quotient = np.around(obj_width / data_interval)
+        corrected_width = quotient * data_interval
         center_to_hand = corrected_width / 2.0
 
         R_Fcut_look_fw[:, IDX["TCP_Y"]] -= center_to_hand
         L_Fcut_look_fw[:, IDX["TCP_Y"]] += center_to_hand
-        self.reposition_R.debug_F(R_Fcut_look_fw, rviz_utils.t_BLUE, "R_Fcut_look_fw", -0.01, 0.03)
-        self.reposition_L.debug_F(L_Fcut_look_fw, rviz_utils.t_RED, "L_Fcut_look_fw", -0.02, 0.02)
+
+        obj_center = (req.Pt.x, req.Pt.y)
+        self.reposition.target_center = np.array(obj_center)
+        self.reposition.debug_F(R_Fcut_look_fw, rviz_utils.t_BLUE, "R_Fcut_look_fw", 0.03, 0.03)
+        self.reposition.debug_F(L_Fcut_look_fw, rviz_utils.t_RED, "L_Fcut_look_fw", 0.04, 0.02)
+
+        # rospy.logwarn(R_Fcut_look_fw.shape)
+        # rospy.loginfo(R_Fcut_look_fw)
+        # rospy.logwarn(L_Fcut_look_fw.shape)
+        # rospy.loginfo(L_Fcut_look_fw)
 
         # collection
         def make_int_key(raw_data_point):
-            """unit: meter"""
             salt = 0.01
+            # meter
             x = raw_data_point[IDX["TCP_X"]] + salt
             y = raw_data_point[IDX["TCP_Y"]] + salt
-            to_meter = 1.0 / data_interval
-            return (int(x * to_meter), int(y * to_meter))
+            return (int(x * 20.), int(y * 20.))
+
+        l_dict = {make_int_key(p): p for p in L_Fcut_look_fw}
+
+        # rospy.logwarn(l_dict.keys())
 
         rospy.logwarn(R_Fcut_look_fw.shape)
-        l_dict = {make_int_key(p): p for p in L_Fcut_look_fw}
         Fdual = []
         for r in R_Fcut_look_fw:
+            rospy.loginfo(r.shape)
             xy = make_int_key(r)
             if xy in l_dict:
+                # rospy.loginfo(xy) ?? wired... since same xy keys occur
                 l_manip = l_dict[xy][IDX["M"]]
                 r_manip = r[IDX["M"]]
                 dual_manip = min(l_manip, r_manip)
+                # rospy.loginfo(dual_manip)
+
                 dual = r.copy()
                 dual[IDX["M"]] = dual_manip
                 Fdual.append(dual)
         Fdual = np.array(Fdual)
+        self.reposition.debug_F(Fdual, rviz_utils.GREEN, "Fdual", 0.055, 0.01)
 
-        # Center filtering
-        if req.strict_dual is True:
-            _ts = data_interval * 0.8
-            _yf = Fdual[:, IDX["TCP_Y"]]
-            _cf = (_yf <= _ts) * (_yf >= -0.001)
-            Fdual = Fdual[_cf]
-            Fdual[:, IDX["TCP_Y"]] = 0.0
+        rospy.logwarn(Fdual.shape)
+        # rospy.loginfo(Fdual)
 
-        self.reposition_R.debug_F(Fdual, rviz_utils.GREEN, "Fdual", -0.035, 0.01)
-
-        # Wiped ###############################
-        if req.strict_dual is True:
-            object_dir_deg = np.degrees(req.Ct.x)
-            Fwiped = self.reposition_R.get_F_interpolate_for_strict(
-                object_dir_deg, Fdual, verbose, interval=0.01
-            )
-        else:
-            minCt = np.degrees(req.Ct.x)
-            maxCt = np.degrees(req.Ct.y)
-            Fwiped = self.reposition_R.get_Fwiped(minCt, maxCt, Fdual, verbose, interval=0.01)
-        #######################################
-
-        rospy.logwarn("Fwiped shape: %s", Fwiped.shape)
-        self.reposition_R.debug_Fwiped(Fwiped, rviz_utils.YELLOW, "Fwiped", -0.03, 0.01)
+        # Wiped
+        minCt = np.degrees(req.Ct.x)
+        maxCt = np.degrees(req.Ct.y)
+        Fwiped = self.reposition.get_Fwiped(minCt, maxCt, Fdual, verbose, interval=0.01)
+        rospy.logerr(Fwiped.shape)
+        self.reposition.debug_Fwiped(Fwiped, rviz_utils.BLUE, "Fwiped", 0.0, 0.01)
 
         # Clean
         Obs = [CollisionBox((box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y) for box in req.Obs]
-        Fclean = self.reposition_R.get_Fclean(Obs, Fwiped, req.collision_offset, verbose)
-        rospy.logwarn("Fclean shape: %s", Fclean.shape)
+        Fclean = self.reposition.get_Fclean(Obs, Fwiped, verbose)
 
-        candidates = self.reposition_R.get_candidates(Fclean, num=-1, is_dual=True)
+        rospy.logwarn(Fclean.shape)
+
+        candidates = self.reposition.get_candidates(Fclean, num=-1, is_dual=True)
         return candidates
 
     def callback_process(self, req):
         if req.hand_type == req.DUAL_HAND:
             candidates = self.solv_dual_hand(req)
-        elif req.hand_type == req.RIGHT_HAND:
-            candidates = self.solv_one_hand(req, is_right=True)
-        elif req.hand_type == req.LEFT_HAND:
-            candidates = self.solv_one_hand(req, is_right=False)
         else:
-            raise ValueError
+            candidates = self.solv_one_hand(req)
 
         rospy.loginfo("num_candidates: %s", len(candidates))
         """
@@ -210,10 +208,10 @@ class InverseReachabilitySolver:
 
 def run_service():
     rospy.init_node("ir_server")
-    InverseReachabilitySolver()
-    #     float(rospy.get_param("/ir_server/base_radius")),
-    #     rospy.get_param("/ir_server/config"),
-    # )
+    InverseReachabilitySolver(
+        float(rospy.get_param("/ir_server/base_radius")),
+        rospy.get_param("/ir_server/config"),
+    )
     rospy.spin()
 
 
