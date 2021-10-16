@@ -63,6 +63,7 @@ vision_msgs/BoundingBox2D[] Obs
 #               Ct = (use when not strict) / (use only x when strict)
 geometry_msgs/Vector3 Cr
 geometry_msgs/Vector3 Ct
+# TODO: Input roll, pitch required...
 
 # x is min_radius, y is max_radius, z is interval
 # TODO: min, max is not required. We need only interval. (and max_dist?)

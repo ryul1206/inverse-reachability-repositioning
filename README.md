@@ -6,6 +6,31 @@ This package will find a proper base position to manipulation by the inverse rea
 roslaunch ir_repositioning ir_server.launch
 ```
 
+### RM Data
+
+| Column Index | Name              | Unit       | Remark |
+| ----- | ----------------- | ---------- | ------ |
+| 0     | TCP x             | meter      |        |
+| 1     | TCP y             | meter      | L!=R   |
+| 2     | TCP z             | meter      |        |
+| 3     | EEP x             | meter      |        |
+| 4     | EEP y             | meter      | L!=R   |
+| 5     | EEP z             | meter      |        |
+| 6     | EE Roll           | **DEGREE** |        |
+| 7     | EE Pitch          | **DEGREE** |        |
+| 8     | EE Yaw: Cr        | **DEGREE** | L!=R   |
+| 9     | Manipulability    | -          |        |
+| 10    | Joint_0: Waist_Roll      | radian     | L!=R   |
+| 11    | Joint_1: Waist_Pitch     | radian     |        |
+| 12    | Joint_2: RShoulder_Pitch | radian     |        |
+| 13    | Joint_3: RShoulder_Roll  | radian     | L!=R   |
+| 14    | Joint_4: RElbow_Pitch    | radian     |        |
+| 15    | Joint_5: RElbow_Yaw      | radian     | L!=R   |
+| 16    | Joint_6: RWrist_Pitch    | radian     |        |
+| 17    | Joint_7: RWrist_Roll     | radian     | L!=R   |
+
+"robocare_right_reachability_map.npy" has 18 columns. (Index 17 is "Joint_7".)
+
 ### IRM Data (Input)
 
 - Sample: ./config/robocare_right_irm.npy
