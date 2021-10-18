@@ -8,5 +8,5 @@
     </node>
 
     <!-- ir repositioning -->
-    <include file="$(find ir_repositioning)/launch/ir_server.launch"/>
+    <include file="$(find irm_server)/launch/irm_server.launch"/>
 </launch>

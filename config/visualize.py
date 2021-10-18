@@ -66,18 +66,24 @@ def gradient_color(v):
 def sub_line(xlimit, ylimit, zlimit, ax):
     margin = 0.03
     verts = [
-        [(xlimit[0] - margin, 0, 0), (xlimit[1] + margin, 0, 0)],
-        [(0, ylimit[0] - margin, 0), (0, ylimit[1] + margin, 0)],
-        [(0, 0, zlimit[0] - margin), (0, 0, zlimit[1] + margin)],
+        [(xlimit[0] - margin, 0, 0), (0, 0, 0)],
+        [(0, 0, 0), (xlimit[1] + margin, 0, 0)],
+        [(0, ylimit[0] - margin, 0), (0, 0, 0)],
+        [(0, 0, 0), (0, ylimit[1] + margin, 0)],
+        [(0, 0, zlimit[0] - margin), (0, 0, 0)],
+        [(0, 0, 0), (0, 0, zlimit[1] + margin)],
     ]
     # srf = Poly3DCollection(verts, edgecolor=hex(100, 100, 100), linewidth=.5)
-    srf = Poly3DCollection(verts, edgecolor=hex(255, 120, 250), linewidth=1)
-    ax.add_collection3d(srf)
+    for v in verts:
+        srf = Poly3DCollection([v], edgecolor=hex(255, 120, 250), linewidth=1.2)
+        ax.add_collection3d(srf)
 
 
 def canvas(ax, xlimit, ylimit, zlimit):
-    elevation = 17  # deg
-    azimuth = 169  # deg
+    # elevation = 11  # deg
+    # azimuth = 174  # deg
+    elevation = 43  # deg
+    azimuth = 140  # deg
     ax.view_init(elevation, azimuth)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
@@ -107,7 +113,7 @@ def RM(ax):
     manip_normalized = get_manip_normalized(rm, IDX_M)
 
     # BASE
-    base_verts = [new_base(np.identity(3), np.zeros(3), length=0.3)]
+    base_verts = [new_base(np.identity(3), np.array((0, 0, 0.02)), length=0.3)]
     srf = Poly3DCollection(base_verts, alpha=1.0, edgecolor=hex(0, 0, 0), linewidth=2.5)
     srf.set_facecolor(hex(255, 255, 255))
     ax.add_collection3d(srf)
@@ -173,7 +179,7 @@ def OLD_IRM(ax):
     ax.add_collection3d(srf)
 
     # TCP
-    tcp_verts = [new_tcp(np.identity(3), np.zeros(3), length=0.15)]
+    tcp_verts = [new_tcp(np.identity(3), np.array((-0.02, 0.02, 0.02)), length=0.15)]
     srf = Poly3DCollection(tcp_verts, closed=False, alpha=0.0, edgecolor=hex(0, 0, 0), linewidth=2.5)
     srf.set_facecolor(hex(255, 255, 255))
     ax.add_collection3d(srf)
@@ -261,21 +267,3 @@ if __name__ == "__main__":
     # ]]
     # srf = Poly3DCollection(verts, alpha=.8, facecolor=hex(0, 255, 255))
     # ax.add_collection3d(srf)
-
-    # =========================================
-    # a = np.array([( 0, 0, 0),( 1, 0, 0),( 1, 1, 0),( 0, 1, 0)])
-    # R1 = np.array([[0,-1,0],[1,0,0],[0,0,1]])
-    # R2 = (R1[::-1].T)[:,[1,0,2]]
-    # R3 = (R1[::-1])[:,[1,0,2]]
-    # f = lambda a,r: np.matmul(r, a.T).T
-    # g = lambda a,r: [a, f(a,r), f(f(a,r),r), f(f(f(a,r),r),r)]
-    # ax.scatter([-1,1], [-1,1], [-1,1], alpha=0.0)
-    # for i, ind , r in zip(range(3),[[0,1,2],[2,0,1],[1,2,0]], [R1,R2,R3]):
-    #     xy = g(a[:,ind], r )
-    #     for x in xy:
-    #         face1 = mp3d.art3d.Poly3DCollection([x] , alpha=0.1, linewidth=1)
-    #         face1.set_facecolor((i//2, i%2, i==0,  0.5))
-    #         ax.add_collection3d(face1)
-
-    # old_irm = np.load('robocare_right_old_irm.npy')
-    # new_irm = np.load('robocare_right_irm.npy')

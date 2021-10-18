@@ -9,7 +9,7 @@ from data_shape import IDX, wIDX  # wIDX: Fwiped
 from collision import CollisionBox
 from geometry_msgs.msg import Pose2D
 from sensor_msgs.msg import JointState
-from ir_repositioning.srv import Repositioning, RepositioningResponse
+from irm_server.srv import Repositioning, RepositioningResponse
 
 
 class InverseReachabilitySolver:
@@ -18,7 +18,7 @@ class InverseReachabilitySolver:
         self.config = config
 
         # Load IRM data
-        pkg_dir = rospkg.RosPack().get_path("ir_repositioning")
+        pkg_dir = rospkg.RosPack().get_path("irm_server")
         file_path = "%s/config/%s.npy" % (pkg_dir, self.config)
         self.reposition = irm.InverseReachabilityMap(file_path, self.base_radius)
 

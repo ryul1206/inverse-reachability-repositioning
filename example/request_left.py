@@ -2,13 +2,13 @@
 import numpy as np
 import rospy
 from vision_msgs.msg import BoundingBox2D
-from ir_repositioning.srv import Repositioning, RepositioningRequest
+from irm_server.srv import Repositioning, RepositioningRequest
 """
 [SERVICE RUN]
-roslaunch ir_repositioning ir_server.launch
+roslaunch irm_server ir_server.launch
 
 [REQUEST EXAMPLE]
-rosrun ir_repositioning request.py
+rosrun irm_server request.py
 """
 
 

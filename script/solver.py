@@ -3,13 +3,16 @@ import rospy
 import rospkg
 import numpy as np
 import irm
+import old_irm
+
 import copy
 import rviz_utils
 from data_shape import IDX  # , wIDX  # wIDX: Fwiped
 from collision import CollisionBox
 from geometry_msgs.msg import Pose2D
 from sensor_msgs.msg import JointState
-from ir_repositioning.srv import Repositioning, RepositioningResponse
+
+from irm_server.srv import Repositioning, RepositioningResponse
 
 
 class InverseReachabilitySolver:
@@ -18,19 +21,24 @@ class InverseReachabilitySolver:
         # self.config = config
 
         # Load IRM data
-        pkg_dir = rospkg.RosPack().get_path("ir_repositioning")
-        self.reposition_R = irm.InverseReachabilityMap("%s/config/robocare_right_irm.npy" % pkg_dir)
-        self.reposition_L = irm.InverseReachabilityMap("%s/config/robocare_left_irm.npy" % pkg_dir)
+        pkg_dir = rospkg.RosPack().get_path("irm_server")
 
-        rospy.loginfo("IRM Loading (Right):\n%s", self.reposition_R)
-        rospy.loginfo("IRM Loading (Left):\n%s", self.reposition_L)
+        self.reposition_R_old_style = old_irm.OldIrm("%s/config/robocare_right_old_irm.npy" % pkg_dir)
+        rospy.loginfo("OLD IRM is loaded (Right):\n%s", self.reposition_R_old_style)
+
+        self.reposition_R = irm.InverseReachabilityMap("%s/config/robocare_right_irm.npy" % pkg_dir)
+        rospy.loginfo("IRM is loaded (Right):\n%s", self.reposition_R)
+
+        self.reposition_L = irm.InverseReachabilityMap("%s/config/robocare_left_irm.npy" % pkg_dir)
+        rospy.loginfo("IRM is loaded (Left):\n%s", self.reposition_L)
 
         # Start a service
-        rospy.Service("/ir_server/find_positions", Repositioning, self.callback_process)
+        rospy.Service("/new_irm_server/find_positions", Repositioning, self.callback_process)
 
-    def solv_one_hand(self, req, is_right=None):
+    def solv_one_hand(self, req, irm_solver_class):
         # INPUT
-        Pt = (req.Pt.x, req.Pt.y)
+        Pt = (req.Pt.x, req.Pt.y, req.Pt.z)
+
         Obs = [CollisionBox((box.center.x, box.center.y), box.center.theta, box.size_x, box.size_y) for box in req.Obs]
 
         # min, max (rad)
@@ -43,14 +51,16 @@ class InverseReachabilitySolver:
             req.section_definition.z,
         )
 
-        if is_right is None:
-            raise NotImplementedError()
-        repos = self.reposition_R if is_right else self.reposition_L
-
-        candidates = repos.calc(Pt, Obs, Cr, Ct, section_def, req.collision_offset, req.max_dist)
+        if irm_solver_class is None:
+            raise NotImplementedError
+        candidates = irm_solver_class.calc(
+            Pt, Obs, Cr, Ct, section_def, req.collision_offset, req.max_dist)
         return candidates
 
     def solv_dual_hand(self, req, verbose=False):
+        raise NotImplementedError
+        # TODO: Pt(Pose2d) -> Pt(Pose)
+
         data_interval = 0.05  # meter
 
         # Right hand
@@ -139,25 +149,34 @@ class InverseReachabilitySolver:
         return candidates
 
     def callback_process(self, req):
+        if req.style == "new_irm":
+            left_solver = self.reposition_L
+            right_solver = self.reposition_R
+        elif req.style == "old_irm":
+            left_solver = None
+            right_solver = self.reposition_R_old_style
+        else:
+            raise ValueError
+
         if req.hand_type == req.DUAL_HAND:
             candidates = self.solv_dual_hand(req)
         elif req.hand_type == req.RIGHT_HAND:
-            candidates = self.solv_one_hand(req, is_right=True)
+            candidates = self.solv_one_hand(req, right_solver)
         elif req.hand_type == req.LEFT_HAND:
-            candidates = self.solv_one_hand(req, is_right=False)
+            candidates = self.solv_one_hand(req, left_solver)
         else:
             raise ValueError
 
         rospy.loginfo("num_candidates: %s", len(candidates))
         """
-        Candidates:
+        Candidates: (Only Use *)
         | Column Index | Name                     | Unit       | Remark           |
         | ------------ | ------------------------ | ---------- | ---------------- |
-        | 0            | Ct                       | **DEGREE** |                  |
-        | 1            | Cr                       | **DEGREE** | EE Yaw           |
-        | 2            | Mobile Base x            | meter      | For query output |
-        | 3            | Mobile Base y            | meter      | For query output |
-        | 4            | Manipulability           | -          |                  |
+        | 0    *       | Ct                       | **DEGREE** |                  |
+        | 1    *       | Cr                       | **DEGREE** | EE Yaw           |
+        | 2    *       | Mobile Base x            | meter      | For query output |
+        | 3    *       | Mobile Base y            | meter      | For query output |
+        | 4    *       | Manipulability           | -          |                  |
         | 5            | Target Object z (height) | meter      | For query input  |
         | 6            | EEP x                    | meter      | Based on base_footprint |
         | 7            | EEP y                    | meter      | Based on base_footprint |
@@ -165,9 +184,9 @@ class InverseReachabilitySolver:
         | 9            | EE Roll                  | **DEGREE** | Based on base_footprint |
         | 10           | EE Pitch                 | **DEGREE** | Based on base_footprint |
         | 11           | EE Yaw                   | **DEGREE** | Cr, Based on base_footprint |
-        | 12           | Joint_0 value            | radian     |                  |
-        | 13           | Joint_1 value            | radian     |                  |
-        | >=14         | Joint_2... values        | radian     |                  |
+        | 12   *       | Joint_0 value            | radian     |                  |
+        | 13   *       | Joint_1 value            | radian     |                  |
+        | >=14 *       | Joint_2... values        | radian     |                  |
         """
 
         candis = []  # geometry_msgs/Pose2D[]

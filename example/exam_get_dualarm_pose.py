@@ -4,15 +4,15 @@ import rospy
 import tf
 from tf.transformations import euler_from_quaternion
 from vision_msgs.msg import BoundingBox2D
-from ir_repositioning.srv import Repositioning, RepositioningRequest
+from irm_server.srv import Repositioning, RepositioningRequest
 from geometry_msgs.msg import PoseArray, PoseStamped
 
 """
 [SERVICE RUN]
-roslaunch ir_repositioning ir_server.launch
+roslaunch irm_server ir_server.launch
 
 [REQUEST EXAMPLE]
-rosrun ir_repositioning request.py
+rosrun irm_server request.py
 """
 
 def load_objects():
@@ -45,7 +45,7 @@ def request():
     req.dual_hand_width = 0.2
 
     # set objects
-    target_name = 'box'  
+    target_name = 'box'
 
     for i, obj in enumerate(objects):
         if obj['name'] == target_name:
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     rospy.init_node('ir_test')
     pose_pub = rospy.Publisher('/mobile_pose', PoseArray, queue_size=10)
 
-    resp = request()     
+    resp = request()
     print('number of candidates: ', resp.num_candidates)
     if(resp.num_candidates>0):
         pose_array = res_to_msg(resp)
@@ -110,6 +110,6 @@ if __name__ == "__main__":
         rate = rospy.Rate(10)
         while(not rospy.is_shutdown()):
             pose_pub.publish(pose_array)
-            iter += 1   
+            iter += 1
             rate.sleep()
         print(resp.candidates[0])

@@ -52,37 +52,50 @@ class InverseReachabilityMap:
         #######
         # self.free_raw = None
 
-        self.target_center = np.array([0, 0])
+        self.target_center = np.array([0, 0, 0])
         self.rviz_clearing_idx_max = 5
         self.rviz_debug = rospy.Publisher("/ir_server/debug_markers", Marker, queue_size=1, latch=True)
         self.rviz_best = rospy.Publisher("/ir_server/best_base", Marker, queue_size=1, latch=True)
 
     def __repr__(self):
-        repr = "< Inverse Reachability Solver >\n"
-        repr += "Configuration:\n"
-        repr += "    IRM data: %s\n" % self.file_path
-        repr += "       Shape: %s\n" % str(self.irm_raw.shape)
-        return repr
+        msg = "< Inverse Reachability Solver >\n"
+        msg += "Configuration:\n"
+        msg += "    IRM data: %s\n" % self.file_path
+        msg += "       Shape: %s\n" % str(self.irm_raw.shape)
+        return msg
 
     def xy_correction(self, xys):
         """For ROS
         xys: np.array [[x, y], ...]
         """
-        corrected = xys + self.target_center
+        corrected = xys + self.target_center[:2]
         return corrected
 
-    def get_Fcut(self, minCr, maxCr, max_dist, verbose):
+    def get_Fcut(self, target_z, minCr, maxCr, max_dist, verbose):
         """min/max Cr is in degree."""
-        Crs = self.irm_raw[:, IDX["Y"]]
 
+        # TODO: now is hardcoding...
+        # Z: 0.7, 0.75, 0.8
+        Zs = self.irm_raw[:, IDX["TCP_Z"]]
+        if target_z < 0.725:
+            z_filter = Zs < 0.725
+        elif target_z < 0.775:
+            z_filter = (Zs >= 0.725) * (Zs < 0.775)
+        else:
+            z_filter = Zs >= 0.775
+        Fcut = self.irm_raw[z_filter].copy()
+
+        # Cr range
+        Crs = self.irm_raw[:, IDX["Y"]]
         filter_arr = (Crs >= minCr) * (Crs <= maxCr)
-        Fcut = self.irm_raw[filter_arr].copy()
+        # Fcut = self.irm_raw[filter_arr].copy()
+        Fcut = Fcut[filter_arr]
 
         # max dist
-        def sq_dist(x, y):
-            return x**2 + y**2
-
-        in_dist = [sq_dist(x, y) <= (max_dist**2) for x, y in Fcut[:, IDX["TCP_X"]:IDX["TCP_Z"]]]
+        in_dist = [
+            (x**2 + y**2) <= (max_dist**2)
+            for x, y in Fcut[:, IDX["TCP_X"]:IDX["TCP_Z"]]
+        ]
         Fcut = Fcut[in_dist]
         return Fcut
 
@@ -178,7 +191,6 @@ class InverseReachabilityMap:
             num_points = int(two_pi / d_rad)
             half = int(num_points / 2)
             # Circular Mapping in the range of Ct
-            # # Now, it is hardcoded in -180 ~ 180. (X)
             for idx in range(-half, num_points - half):
                 rad = d_rad * idx
                 Ct = np.degrees(rad)
@@ -365,7 +377,8 @@ class InverseReachabilityMap:
         Fclean = Fwiped
         for collision in Obs:
             collision.set_offset(collision_offset)
-            filter_arr = [not collision.check(p[wIDX["Bx"]:wIDX["M"]] + self.target_center) for p in Fclean]
+            # base xy is NOT in qframe. So, Add target_center.
+            filter_arr = [not collision.check(p[wIDX["Bx"]:wIDX["M"]] + self.target_center[:2]) for p in Fclean]
             Fclean = Fclean[filter_arr]
 
         # free_raw = Fclean.copy()
@@ -495,7 +508,7 @@ class InverseReachabilityMap:
         * Angle unit: radians
 
         Pt: Position of the target object (in global coordinates)
-            - format: (x, y)
+            - format: (x, y, z)
         Obs: Area list of ground obstacles (in global coordinates)
             - format: [CollisionModel, ...]
         Cr: Constraints on the approach angle (relative to the robot heading)
@@ -509,13 +522,15 @@ class InverseReachabilityMap:
         """
         # self.free_raw = None
         self.target_center = np.array(Pt)
+        target_z = self.target_center[2]
+        # 0.7, 0.75, 0.8
 
         ###################################
         # 1. Fcut
         ###################################
         minCr = np.degrees(Cr[0])
         maxCr = np.degrees(Cr[1])
-        Fcut = self.get_Fcut(minCr, maxCr, max_dist, verbose)
+        Fcut = self.get_Fcut(target_z, minCr, maxCr, max_dist, verbose)
         rospy.logwarn("Fcut: %s", Fcut.shape)
 
         ###################################
