@@ -59,14 +59,13 @@ def request():
     # req.Ct.y = np.radians(135.0)
 
     # """
-    # old
+    # old(500): avg=0.695025597095, std=0.156639099771
     # new(500): avg=0.13861464262, std=0.015473369404
-
     # """
-    # req.Cr.x = np.radians(-2)
-    # req.Cr.y = np.radians(2)
-    # req.Ct.x = np.radians(-90.0)
-    # req.Ct.y = np.radians(90.0)
+    req.Cr.x = np.radians(-2)
+    req.Cr.y = np.radians(2)
+    req.Ct.x = np.radians(-90.0)
+    req.Ct.y = np.radians(90.0)
 
     # """
     # old
