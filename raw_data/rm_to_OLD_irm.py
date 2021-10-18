@@ -144,7 +144,8 @@ def rm_to_old_irm(rm):
     return np.array(old_irm)
 
 
-right_rm = np.load('robocare_right_reachability_map.npy')
+# right_rm = np.load('robocare_right_reachability_map.npy')
+right_rm = np.load('socialrobot_RM_2021-10-14_09-50-24_wip.npy')
 # print(right_rm.shape)
 # print(right_rm[:2])
 
@@ -152,6 +153,7 @@ rm = right_rm
 old_irm = rm_to_old_irm(rm)
 print(old_irm[:2])
 
-npy_name = "robocare_right_old_irm.npy"
+# npy_name = "robocare_right_old_irm.npy"
+npy_name = "socialrobot_wip_right_old_irm.npy"
 np.save(npy_name, old_irm)
 print("JOB DONE!")

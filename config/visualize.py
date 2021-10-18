@@ -1,4 +1,3 @@
-from colour import hash_or_str
 import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as mp3d
@@ -82,8 +81,10 @@ def sub_line(xlimit, ylimit, zlimit, ax):
 def canvas(ax, xlimit, ylimit, zlimit):
     # elevation = 11  # deg
     # azimuth = 174  # deg
+
     elevation = 43  # deg
     azimuth = 140  # deg
+
     ax.view_init(elevation, azimuth)
     ax.set_xlabel('x')
     ax.set_ylabel('y')
@@ -101,12 +102,13 @@ def canvas(ax, xlimit, ylimit, zlimit):
     return ax
 
 
-def RM(ax):
-    xlimit = (-.5, .7)
-    ylimit = (-.9, .3)
-    zlimit = (-.2, 1.)
+def RM(ax, npy_name, xyz_view_boundary):
+    xlimit, ylimit, zlimit = xyz_view_boundary
+    # xlimit = (-.5, .7)
+    # ylimit = (-.9, .3)
+    # zlimit = (-.2, 1.)
     ax = canvas(ax, xlimit, ylimit, zlimit)
-    rm = np.load('robocare_right_RM.npy')
+    rm = np.load(npy_name)
 
     # COLOR
     IDX_M = 9
@@ -148,12 +150,13 @@ def RM(ax):
     sub_line(xlimit, ylimit, zlimit, ax)
 
 
-def OLD_IRM(ax):
-    xlimit = (-.7, .5)
-    ylimit = (-.2, 1.)
-    zlimit = (-.8, .4)
+def OLD_IRM(ax, npy_name, xyz_view_boundary):
+    xlimit, ylimit, zlimit = xyz_view_boundary
+    # xlimit = (-.7, .5)
+    # ylimit = (-.2, 1.)
+    # zlimit = (-.8, .4)
     ax = canvas(ax, xlimit, ylimit, zlimit)
-    irm = np.load('robocare_right_old_irm.npy')
+    irm = np.load(npy_name)
 
     # COLOR
     IDX_M = 10
@@ -188,12 +191,13 @@ def OLD_IRM(ax):
     sub_line(xlimit, ylimit, zlimit, ax)
 
 
-def NEW_IRM(ax):
-    xlimit = (-.8, .4)
-    ylimit = (-.5, .7)
-    zlimit = (-.2, 1.)
+def NEW_IRM(ax, npy_name, xyz_view_boundary):
+    xlimit, ylimit, zlimit = xyz_view_boundary
+    # xlimit = (-.8, .4)
+    # ylimit = (-.5, .7)
+    # zlimit = (-.2, 1.)
     ax = canvas(ax, xlimit, ylimit, zlimit)
-    irm = np.load('robocare_right_irm.npy')
+    irm = np.load(npy_name)
 
     # COLOR
     IDX_M = 9
@@ -241,9 +245,14 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(1, 3, 2, projection='3d', title="Reference IRM")
     ax3 = fig.add_subplot(1, 3, 3, projection='3d', title="Proposed IRM")
 
-    RM(ax1)
-    OLD_IRM(ax2)
-    NEW_IRM(ax3)
+
+    RM(ax1, 'robocare_right_RM.npy', ((-.5, .7), (-.9, .3), (-.2, 1.)))
+    OLD_IRM(ax2, 'robocare_right_old_irm.npy', ((-.7, .5), (-.2, 1.), (-.8, .4)))
+    NEW_IRM(ax3, 'robocare_right_irm.npy', ((-.8, .4), (-.5, .7), (-.2, 1.)))
+
+    # # RM(ax1, 'socialrobot_wip_right_rm.npy', ((-.5, .7), (-.9, .3), (-.2, 1.)))
+    # OLD_IRM(ax2, 'socialrobot_wip_right_old_irm.npy', ((-.7, .5), (-.2, 1.), (-.8, .4)))
+    # NEW_IRM(ax3, 'socialrobot_wip_right_irm.npy', ((-.8, .4), (-.5, .7), (-.2, 1.)))
 
     plt.show()
 
