@@ -84,11 +84,14 @@ class InverseReachabilityMap:
         else:
             z_filter = Zs >= 0.775
         Fcut = self.irm_raw[z_filter].copy()
+        # rospy.logwarn(Fcut.shape)
 
         # Cr range
-        Crs = self.irm_raw[:, IDX["Y"]]
+        # Crs = self.irm_raw[:, IDX["Y"]]
+        Crs = Fcut[:, IDX["Y"]]
         filter_arr = (Crs >= minCr) * (Crs <= maxCr)
         # Fcut = self.irm_raw[filter_arr].copy()
+        # rospy.logwarn(filter_arr)
         Fcut = Fcut[filter_arr]
 
         # max dist
@@ -385,37 +388,37 @@ class InverseReachabilityMap:
         free_raw = Fclean
 
         # ROS
-        def _get_line_strip(_id, vertices, color):
-            """vertices: [[x, y], ...]"""
-            closed = np.append(vertices, [vertices[0]], axis=0)
-            _points = [(x, y, 0.0) for x, y in closed]
-            _colors = [color for _ in closed]
-            return rviz_utils.create_line(_id, _points, _colors)
+        # def _get_line_strip(_id, vertices, color):
+        #     """vertices: [[x, y], ...]"""
+        #     closed = np.append(vertices, [vertices[0]], axis=0)
+        #     _points = [(x, y, 0.0) for x, y in closed]
+        #     _colors = [color for _ in closed]
+        #     return rviz_utils.create_line(_id, _points, _colors)
 
-        # obstacles
-        idx = 0
-        for collision in Obs:
-            _vxys = np.transpose(collision.vertices)
-            _oxys = np.transpose(collision.offsets)
-            self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
-            self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
-            idx += 1
-        empty_box = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
-        for _i in xrange(idx, self.rviz_clearing_idx_max):
-            self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, empty_box, rviz_utils.t_NO_COLOR))
-            self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, empty_box, rviz_utils.t_NO_COLOR))
+        # # obstacles
+        # idx = 0
+        # for collision in Obs:
+        #     _vxys = np.transpose(collision.vertices)
+        #     _oxys = np.transpose(collision.offsets)
+        #     self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, _vxys, rviz_utils.WHITE))
+        #     self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, _oxys, rviz_utils.RED))
+        #     idx += 1
+        # empty_box = [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]
+        # for _i in xrange(idx, self.rviz_clearing_idx_max):
+        #     self.rviz_debug.publish(_get_line_strip(_id["obs_real"] + idx, empty_box, rviz_utils.t_NO_COLOR))
+        #     self.rviz_debug.publish(_get_line_strip(_id["obs_offset"] + idx, empty_box, rviz_utils.t_NO_COLOR))
 
-        # ROS
-        _xys = self.xy_correction(Fclean[:, wIDX["Bx"]:wIDX["M"]])
-        _points = [(x, y, 0.0) for x, y in _xys]
-        _ms = Fclean[:, wIDX["M"]]
-        if _ms.size:
-            _colors = jutils.get_colors(_ms)
-            self.rviz_debug.publish(rviz_utils.create_points(
-                _id["Fclean"],
-                _points,
-                _colors,
-            ))
+        # # ROS
+        # _xys = self.xy_correction(Fclean[:, wIDX["Bx"]:wIDX["M"]])
+        # _points = [(x, y, 0.0) for x, y in _xys]
+        # _ms = Fclean[:, wIDX["M"]]
+        # if _ms.size:
+        #     _colors = jutils.get_colors(_ms)
+        #     self.rviz_debug.publish(rviz_utils.create_points(
+        #         _id["Fclean"],
+        #         _points,
+        #         _colors,
+        #     ))
         return free_raw
 
     def get_candidates(self, free_raw, num=-1, is_dual=False, verbose=False):

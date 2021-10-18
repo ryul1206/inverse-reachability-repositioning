@@ -5,7 +5,7 @@ from vision_msgs.msg import BoundingBox2D
 from irm_server.srv import Repositioning, RepositioningRequest
 """
 [SERVICE RUN]
-roslaunch irm_server ir_server.launch
+roslaunch irm_server irm_server.launch
 
 [REQUEST EXAMPLE]
 rosrun irm_server request.py

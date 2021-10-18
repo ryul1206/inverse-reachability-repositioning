@@ -41,9 +41,6 @@ class OldIrm:
             qframe_eef_T = np.dot(Tmat, tcp_eef_T)
 
             manip_scalar = row[OLD_IDX["M"]]
-            print("type of manip scalar")
-            print(type(manip_scalar))
-            exit()
             joints = row[OLD_IDX["Joint"]:]
 
             Fground.append([qframe_base_T, qframe_eef_T, manip_scalar, joints])
@@ -154,7 +151,15 @@ class OldIrm:
                     new_base_x = c * base_x - s * base_y
                     new_base_y = s * base_x + c * base_y
                     dummy = np.concatenate(
-                        ([new_Ct_rad, Cr_rad, new_base_x, new_base_y], remains), axis=0)
+                        (
+                            [
+                                np.degrees(new_Ct_rad),
+                                np.degrees(Cr_rad),
+                                new_base_x,
+                                new_base_y
+                            ],
+                            remains,
+                        ), axis=0)
                     circle_points.append(dummy)
         Fwiped = np.array(circle_points)
         return Fwiped
@@ -163,7 +168,7 @@ class OldIrm:
         Fclean = Fwiped
         for collision in Obs:
             collision.set_offset(collision_offset)
-            filter_arr = [not collision.check(qframe_P_baseXY) for qframe_P_baseXY in Fwiped[:, 2:4]]
+            filter_arr = [not collision.check(qframe_P_baseXY) for qframe_P_baseXY in Fclean[:, 2:4]]
             Fclean = Fclean[filter_arr]
         return Fclean
 

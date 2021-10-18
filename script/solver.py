@@ -4,6 +4,7 @@ import rospkg
 import numpy as np
 import irm
 import old_irm
+import time
 
 import copy
 import rviz_utils
@@ -158,6 +159,8 @@ class InverseReachabilitySolver:
         else:
             raise ValueError
 
+        start = time.time()
+
         if req.hand_type == req.DUAL_HAND:
             candidates = self.solv_dual_hand(req)
         elif req.hand_type == req.RIGHT_HAND:
@@ -167,7 +170,8 @@ class InverseReachabilitySolver:
         else:
             raise ValueError
 
-        rospy.loginfo("num_candidates: %s", len(candidates))
+        duration = time.time() - start
+        rospy.loginfo("num_candidates: %s (dur: %f sec)", len(candidates), duration)
         """
         Candidates: (Only Use *)
         | Column Index | Name                     | Unit       | Remark           |
@@ -209,7 +213,7 @@ class InverseReachabilitySolver:
         # print(type(candidates))
         if len(candidates):
             rospy.logwarn(
-                "IR_Solver Result Sample:\n\tCt: %s\n\tCr: %s\n\t=> theta: %s",
+                "IR_Solver Result Sample:\n\tCt: %.2f deg\n\tCr: %.2f deg\n\t=> theta: %.2f deg",
                 candidates[0, 0],
                 candidates[0, 1],
                 candis[0].theta,

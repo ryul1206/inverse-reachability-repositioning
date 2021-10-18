@@ -91,7 +91,7 @@ bool strict_dual
 ---
 
 # The number of candidates
-uint8 num_candidates
+uint32 num_candidates
 
 # x, y, heading of the robot
 geometry_msgs/Pose2D[] candidates
