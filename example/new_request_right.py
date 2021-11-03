@@ -62,10 +62,11 @@ def request():
     # old(500): avg=0.695025597095, std=0.156639099771
     # new(500): avg=0.13861464262, std=0.015473369404
     # """
-    req.Cr.x = np.radians(-2)
-    req.Cr.y = np.radians(2)
-    req.Ct.x = np.radians(-90.0)
-    req.Ct.y = np.radians(90.0)
+    # req.Cr.x = np.radians(-2)
+    # req.Cr.y = np.radians(2)
+    # req.Ct.x = np.radians(-90.0)
+    # req.Ct.y = np.radians(90.0)
+    #########################
 
     # """
     # old
@@ -93,8 +94,8 @@ def request():
 
         iteration = 500
 
-        # com = "new"
-        com = "old"
+        com = "new"
+        # com = "old"
 
         req.style = "%s_irm" % com
         seconds = []
@@ -117,6 +118,24 @@ def request():
         print("%s ===========" % com)
         print(avg)
         print(stddev)
+
+        # Save to CSV
+        import os
+        import datetime
+        import csv
+
+        file_name = "timetest_500_180{}".format(com)
+        dir_name = "/home/hr/moveit_ws/src/inverse-reachability-repositioning/example"
+        ymd_hms = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        with open(os.path.join(dir_name, "{}_{}.csv".format(file_name, ymd_hms)), "w") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["average", avg])
+            writer.writerow(["stddev", stddev])
+            writer.writerow(["== TYPE ==", com])
+            idx = 0
+            for sec in seconds:
+                writer.writerow([idx, sec])
+                idx += 1
         ####################
 
         return resp
