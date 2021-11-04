@@ -1,4 +1,80 @@
-# Find a Feasible Mobile Manipulation
+# Inverse Reachability Repositioning
+
+This package will find a proper base position to manipulation by the inverse reachability map.
+
+```sh
+roslaunch irm_server ir_server.launch
+```
+
+### RM Data
+
+| Column Index | Name                     | Unit       | Remark |
+| ------------ | ------------------------ | ---------- | ------ |
+| 0            | TCP x                    | meter      |        |
+| 1            | TCP y                    | meter      | L!=R   |
+| 2            | TCP z                    | meter      |        |
+| 3            | EEP x                    | meter      |        |
+| 4            | EEP y                    | meter      | L!=R   |
+| 5            | EEP z                    | meter      |        |
+| 6            | EE Roll                  | **DEGREE** |        |
+| 7            | EE Pitch                 | **DEGREE** |        |
+| 8            | EE Yaw: Cr               | **DEGREE** | L!=R   |
+| 9            | Manipulability           | -          |        |
+| 10           | Joint_0: Waist_Roll      | radian     | L!=R   |
+| 11           | Joint_1: Waist_Pitch     | radian     |        |
+| 12           | Joint_2: RShoulder_Pitch | radian     |        |
+| 13           | Joint_3: RShoulder_Roll  | radian     | L!=R   |
+| 14           | Joint_4: RElbow_Pitch    | radian     |        |
+| 15           | Joint_5: RElbow_Yaw      | radian     | L!=R   |
+| 16           | Joint_6: RWrist_Pitch    | radian     |        |
+| 17           | Joint_7: RWrist_Roll     | radian     | L!=R   |
+
+"robocare_right_reachability_map.npy" has 18 columns. (Index 17 is "Joint_7".)
+
+### IRM Data (Input)
+
+- Sample: ./config/robocare_right_irm.npy
+  - This sample has 7899 points.
+  - The supported z of target is {0.7, 0.75, 0.8}.
+
+| Column Index | Name                     | Unit       | Remark           |
+| ------------ | ------------------------ | ---------- | ---------------- |
+| 0            | Mobile Base x            | meter      | For query output |
+| 1            | Mobile Base y            | meter      | For query output |
+| 2            | Target Object z (height) | meter      | For query input  |
+| 3            | EEP x                    | meter      | For IK solver    |
+| 4            | EEP y                    | meter      | For IK solver    |
+| 5            | EEP z                    | meter      | For IK solver    |
+| 6            | EE Roll                  | **DEGREE** |                  |
+| 7            | EE Pitch                 | **DEGREE** |                  |
+| 8            | EE Yaw                   | **DEGREE** | Cr               |
+| 9            | Manipulability           | -          |                  |
+| 10           | Joint_0 value            | radian     |                  |
+| 11           | Joint_1 value            | radian     |                  |
+| >=12         | Joint_2... values        | radian     |                  |
+
+## Inverse
+
+```sh
+roslaunch irm_server ir_server.launch config:={FILE_NAME} base_radius:=0.3
+```
+
+<!--
+
+
+
+## Folders
+
+- config: raw npy
+- example: ros service request
+- jupyter:
+  - fake_data: fake raw npy
+  - find_feasibility: jupyter demo (online & offline)
+  - transformation: raw npy to config (for offline)
+- raw_data: raw csv to raw npy
+- script: ros service (config required)
+
+---
 
 Find a feasible pose of robot base for good manipulability
 
@@ -22,4 +98,4 @@ Find a feasible pose of robot base for good manipulability
       4. And extract only the maximum as a `Fmax`.
       5. Remove all obstacle areas from `Fmax` with the offset of `Rsize`.
    3. Output
-      1. Candidate poses (sorted in descending order of manipulability)
+      1. Candidate poses (sorted in descending order of manipulability) -->

@@ -1,7 +1,7 @@
 import rospy
 from std_msgs.msg import ColorRGBA
 from geometry_msgs import msg as geo_msg
-from visualization_msgs.msg import Marker, MarkerArray
+from visualization_msgs.msg import Marker
 
 RED = ColorRGBA(1.0, 0.0, 0.0, 1.0)
 GREEN = ColorRGBA(0.0, 1.0, 0.0, 1.0)
@@ -10,12 +10,14 @@ YELLOW = ColorRGBA(1.0, 1.0, 0.0, 1.0)
 PURPLE = ColorRGBA(0.78, 0.2, 1.0, 1.0)
 WHITE = ColorRGBA(1.0, 1.0, 1.0, 1.0)
 
+t_DARK = ColorRGBA(0.1, 0.1, 0.1, 0.5)
 t_RED = ColorRGBA(1.0, 0.0, 0.0, 0.5)
 t_GREEN = ColorRGBA(0.0, 1.0, 0.0, 0.5)
 t_BLUE = ColorRGBA(0.0, 0.0, 1.0, 0.5)
 t_YELLOW = ColorRGBA(1.0, 1.0, 0.0, 0.5)
 t_PURPLE = ColorRGBA(0.78, 0.2, 1.0, 0.5)
 t_WHITE = ColorRGBA(1.0, 1.0, 1.0, 0.5)
+t_NO_COLOR = ColorRGBA(1.0, 1.0, 1.0, 0.0)
 
 DEFAULT_QUAT = geo_msg.Quaternion(0.0, 0.0, 0.0, 1.0)
 
@@ -23,8 +25,6 @@ DEFAULT_QUAT = geo_msg.Quaternion(0.0, 0.0, 0.0, 1.0)
 def _create_marker_init(_id):
     marker = Marker()
     marker.header.frame_id = "map"
-    # marker.header.frame_id = "odom"
-    # marker.header.frame_id = "base_footprint"
     marker.header.stamp = rospy.Time()
     marker.ns = "my_namespace"
     marker.id = _id
