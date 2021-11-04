@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ir_repositioning</name>
+  <name>irm_server</name>
   <version>0.0.1</version>
   <description>This package will find a proper base position to manipulation by the inverse reachability map.</description>
 
@@ -14,7 +14,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/ir_repositioning</url> -->
+  <!-- <url type="website">http://wiki.ros.org/irm_server</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->

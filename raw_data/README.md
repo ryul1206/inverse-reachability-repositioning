@@ -1,6 +1,6 @@
 # Raw Sample Data: RM
 
-![rm_and_irm_3d](rm_and_irm_3d.png)
+![rm_and_irm_3d](../img/rm_and_irm_3d.png)
 
 ### NPY Description
 
@@ -28,30 +28,30 @@ Columns
 
 ### (CSV Sample) Robocare Right Arm
 
-![img](Screenshot%20from%202021-01-27%2010-50-54.png)
+![img](../img/Screenshot%20from%202021-01-27%2010-50-54.png)
 
 - File: [robocare_right_reachability_map.csv](robocare_right_reachability_map.csv)
   - This CSV file has 7899 points.
   - The first row is the title.
 - Columns:
-  - [idx: 0] TCP x
-  - [idx: 1] TCP y
-  - [idx: 2] TCP z of {0.7, 0.75, 0.8}
-  - [idx: 3] eef x
-  - [idx: 4] eef y
-  - [idx: 5] eef z
-  - **[idx: 6] Cr(rzyz)** ← CAUTION
-  - **[idx: 7] Pitch(rzyz)** ← CAUTION
-  - **[idx: 8] Roll(rzyz)** ← CAUTION
-  - [idx: 9] Manipulability
-  - [idx: 10] Joint_0 value: "Waist_Roll"
-  - [idx: 11] Joint_1 value: "Waist_Pitch"
-  - [idx: 12] Joint_2 value: "RShoulder_Pitch"
-  - [idx: 13] Joint_3 value: "RShoulder_Roll"
-  - [idx: 14] Joint_4 value: "RElbow_Pitch"
-  - [idx: 15] Joint_5 value: "RElbow_Yaw"
-  - [idx: 16] Joint_6 value: "RWrist_Pitch"
-  - [idx: 17] Joint_7 value: "RWrist_Roll"
+  - `L =R` [idx: 00] TCP x
+  - `L!=R` [idx: 01] TCP y
+  - `L =R` [idx: 02] TCP z of {0.7, 0.75, 0.8}
+  - `L =R` [idx: 03] eef x
+  - `L!=R` [idx: 04] eef y
+  - `L =R` [idx: 05] eef z
+  - `L!=R` **[idx: 06] Cr(rzyz)** ← CAUTION
+  - `L =R` **[idx: 07] Pitch(rzyz)** ← CAUTION
+  - `L =R` **[idx: 08] Roll(rzyz)** ← CAUTION
+  - `L =R` [idx: 09] Manipulability
+  - `L!=R` [idx: 10] Joint_0 value: "Waist_Roll"
+  - `L =R` [idx: 11] Joint_1 value: "Waist_Pitch"
+  - `L =R` [idx: 12] Joint_2 value: "RShoulder_Pitch"
+  - `L!=R` [idx: 13] Joint_3 value: "RShoulder_Roll"
+  - `L =R` [idx: 14] Joint_4 value: "RElbow_Pitch"
+  - `L!=R` [idx: 15] Joint_5 value: "RElbow_Yaw"
+  - `L =R` [idx: 16] Joint_6 value: "RWrist_Pitch"
+  - `L!=R` [idx: 17] Joint_7 value: "RWrist_Roll"
 
 <!--
 (2) Raw NPY file

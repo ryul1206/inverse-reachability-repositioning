@@ -38,6 +38,9 @@
 # * Angle unit: radians
 # ================================================
 
+# "old_irm", "new_irm"
+string style
+
 # hand
 uint8 hand_type
 uint8 RIGHT_HAND = 0
@@ -45,31 +48,50 @@ uint8 LEFT_HAND  = 1
 uint8 DUAL_HAND  = 2
 # The dual hand version has a different process.
 
-# x, y (ignore theta) <- Tool tip center
+# Tool tip center
+# TODO tcp quaternion will should be considered...
 # If dual_hand, Pt is target_center.
-geometry_msgs/Pose2D Pt
-# Available only when dual_hand
-float32 dual_hand_width
+geometry_msgs/Point Pt
+# deg
+float32 Pitch=90.0
+float32 Yaw=-90.0
+
+# This option works the same as the previous [base_radius] option.
+float32 collision_offset
+
+# Maximum distance constraint to target
+float32 max_dist
 
 # These will be collision models.
 vision_msgs/BoundingBox2D[] Obs
 
-# x is min, y is max (ignore z)
-# If dual_hand, Cr = +/- 90deg.
-#               Ct = narrow direction of the box.
+# x is min, y is max (ignore z) (unit: radian)
+# If dual_hand, Cr = +/- 90deg. (fixed)
+#               Ct = (use when not strict) / (use only x when strict)
 geometry_msgs/Vector3 Cr
 geometry_msgs/Vector3 Ct
 
 # x is min_radius, y is max_radius, z is interval
+# TODO: min, max is not required. We need only interval. (and max_dist?)
 geometry_msgs/Vector3 section_definition
 
 # For the cost function in the get_candidates()
 # float32 preferred_heading
 
+################ ONLY FOR DUAL HAND ################
+# Available only when dual_hand
+# unit: meter
+float32 dual_hand_width
+
+# This [strict_dual=True] option forces the target
+# to always be in front of the robot-center.
+bool strict_dual
+
+
 ---
 
 # The number of candidates
-uint8 num_candidates
+uint32 num_candidates
 
 # x, y, heading of the robot
 geometry_msgs/Pose2D[] candidates
